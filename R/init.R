@@ -10,7 +10,7 @@ init <- function(where){
         CONFIG_MODELS_COMMAND <<- "/usr/local/bin/Models"
         print("Config for local!")
     } else if (where == "container"){
-        base_folder <<- "/home/rstudio/apsimtestes"
+        base_folder <<- "/home/rstudio/apsimx-sensitivity"
         CONFIG_MODELS_COMMAND <<- "/usr/local/bin/Models"
         print("Config for container!")
     } else if (where == "windows"){
@@ -27,7 +27,7 @@ init <- function(where){
     MET_FILES_PATH          <<- file.path(base_folder, "NEW_7949_met")
     SOILS_FILES_PATH        <<- file.path(base_folder, "NEW_7949_soils")
     DADOS_MET_FOLDER        <<- file.path(base_folder, "dados-met")
-    SRC_FOLDER              <<- file.path(base_folder, "src", "R")
+    SRC_FOLDER              <<- file.path(base_folder, "R")
     TABLES_FOLDER           <<- file.path(base_folder, "field_data")
     BASE_SIMULATIONS_FOLDER <<- file.path(base_folder, "base_simulations")
     CONST_TMP_FOLDER        <<- file.path(base_folder, "tmp")
@@ -35,12 +35,9 @@ init <- function(where){
     BIG_FILES_FOLDER        <<- file.path(base_folder, "big_files")
 
     # Source modules
-    source(file.path(SRC_FOLDER, "modify_parameters.R"))
     source(file.path(SRC_FOLDER, "compute_salib.R"))
-    source(file.path(SRC_FOLDER, "utils_summarize.R"))
+    source(file.path(SRC_FOLDER, "modify_parameters.R"))
     source(file.path(SRC_FOLDER, "utils_run_apsimx.R"))
+    source(file.path(SRC_FOLDER, "utils_summarize.R"))
     source(file.path(SRC_FOLDER, "utils.R"))
-    source(file.path(SRC_FOLDER, "replace_gridded.R"))
-    source(file.path(SRC_FOLDER, "retrieve_soil_and_met.R"))
-    source(file.path(SRC_FOLDER, "spatialization.R"))
 }

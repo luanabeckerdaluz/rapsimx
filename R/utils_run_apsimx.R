@@ -169,7 +169,7 @@ generate_apsimx_and_run <- function(df_row, folder, force, sensit_base_sim_filep
   )
 }
 
-generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath, runs_only_some, parallel){
+generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath, N = 5, runs_only_some, parallel){
   # Stop if base sim does not exist
   if (!file.exists(sensit_base_sim_filepath)){
     stop("ERROR! Base sim does not exist!")
@@ -179,7 +179,6 @@ generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath
     stop("ERROR! tmp folder does not exist!")
   }
   # If necessary, filter df to run just N sims
-  N <- 5
   if (runs_only_some && nrow(samples_df)>N)   samples_df <- samples_df[1:N,]
 
   if (parallel) {
@@ -205,7 +204,7 @@ generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath
   }
 }
 
-run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, simulations_names = NA, force = TRUE, ids_to_run = NA, parallel) {
+run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5, simulations_names = NA, force_rerun = TRUE, ids_to_run = NA, parallel) {
   # List files
   apsimx_filepaths <- list.files(
     path = folder,
@@ -214,7 +213,6 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, simul
   )
 
   # If necessary, filter df to run just N sims
-  N <- 5
   if (runs_only_some && length(apsimx_filepaths) > N)   apsimx_filepaths <- apsimx_filepaths[1:N]
 
   # If ids_to_run is defined, summarize just for these ids
@@ -233,7 +231,7 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, simul
     results <- future.apply::future_lapply(
       X = apsimx_filepaths,
       FUN = just_run_apsimx,
-      force = force,
+      force = force_rerun,
       cleanup = cleanup,
       simulations_names = simulations_names
     )
@@ -242,7 +240,7 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, simul
     results <- lapply(
       X = apsimx_filepaths,
       FUN = just_run_apsimx,
-      force = force,
+      force = force_rerun,
       cleanup = cleanup,
       simulations_names = simulations_names
     )
