@@ -6,7 +6,7 @@ CONFIG_MULTICORES <- parallel::detectCores() - 2
 
 init <- function(where){
     if (where == "local"){
-        base_folder <<- "/home/luana/git/luanabeckerdaluz/apsimtestes"
+        base_folder <<- "/home/luanabeckerdaluz/git/luanabeckerdaluz/apsimx-sensitivity"
         CONFIG_MODELS_COMMAND <<- "/usr/local/bin/Models"
         print("Config for local!")
     } else if (where == "container"){

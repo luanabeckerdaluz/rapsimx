@@ -103,21 +103,12 @@ generate_samples_csv <- function(problem, method, N_SAMPLES) {
   dim(samples_df)
   head(samples_df)
 
-  filename <- "samples.csv"
-  write.csv(samples_df, filename, row.names = FALSE)
-  print(paste0("File ", filename, " saved!"))
-
+  
   return(samples_df)
 }
 
 
-plot_samples_distribution <- function(samples_csv_filepath = "samples.csv") {
-  samples_df <- read.csv(samples_csv_filepath) %>%
-    select(id, everything())
-  dim(samples_df)
-  head(samples_df)
-
-  options(repr.plot.width = 14, repr.plot.height = 14)
+plot_samples_distribution <- function(samples_df) {
   samples_df %>%
     tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
     ggplot(aes(x = 1:nrow(.), y = value)) +
