@@ -8,7 +8,8 @@ just_run_apsimx <- function(
   simulations_names = NA,
   report_table = "DailyReport",
   from_config_file = NA,
-  xlsx_or_met_folder = NA
+  xlsx_or_met_folder = NA,
+  dry_run = FALSE
 ) {
 
   # Check inputs
@@ -18,6 +19,12 @@ just_run_apsimx <- function(
   }
   if (!file.exists(apsimx_filepath)){
     stop(paste("ERROR! apsimx simulation", apsimx_filepath, "does not exist!"))
+  }
+
+  # Fake running file
+  if (dry_run) {
+    print(paste0("Running file ", apsimx_filepath))
+    return(NULL)
   }
 
   # Copy all .xlsx or .met files to the same folder of simulation
@@ -156,18 +163,18 @@ generate_apsimx <- function(df_row, folder, sensit_base_sim_filepath) {
   return(filepath_sim)
 }
 
-generate_apsimx_and_run <- function(df_row, folder, force, sensit_base_sim_filepath) {
-  apsimx_filepath <- generate_apsimx(
-    df_row,
-    folder,
-    sensit_base_sim_filepath
-  )
-  just_run_apsimx(
-    apsimx_filepath = apsimx_filepath,
-    force = force, 
-    xlsx_or_met_folder = DADOS_MET_FOLDER
-  )
-}
+# generate_apsimx_and_run <- function(df_row, folder, force, sensit_base_sim_filepath) {
+#   apsimx_filepath <- generate_apsimx(
+#     df_row,
+#     folder,
+#     sensit_base_sim_filepath
+#   )
+#   just_run_apsimx(
+#     apsimx_filepath = apsimx_filepath,
+#     force = force,
+#     xlsx_or_met_folder = DADOS_MET_FOLDER
+#   )
+# }
 
 generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath, N = 5, runs_only_some, parallel){
   # Stop if base sim does not exist
@@ -204,7 +211,7 @@ generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath
   }
 }
 
-run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5, simulations_names = NA, force_rerun = TRUE, ids_to_run = NA, parallel) {
+run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5, simulations_names = NA, force_rerun = TRUE, ids_to_run = NA, parallel, dry_run = FALSE) {
   # List files
   apsimx_filepaths <- list.files(
     path = folder,
@@ -212,17 +219,22 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5
     full.names = TRUE
   )
 
+  # If ids_to_run is defined, summarize just for these ids
+  if (is.numeric(ids_to_run)) {
+    apsimx_filepaths <- apsimx_filepaths[grepl(
+      paste(paste0("simulation", ids_to_run, ".apsimx"), collapse = "|"),
+      apsimx_filepaths
+    )]
+    # print(length(apsimx_filepaths))
+    # print(apsimx_filepaths)
+  }
+
   # If necessary, filter df to run just N sims
   if (runs_only_some && length(apsimx_filepaths) > N)   apsimx_filepaths <- apsimx_filepaths[1:N]
 
-  # If ids_to_run is defined, summarize just for these ids
-  if (is.numeric(ids_to_run)) {
-    files_list <- files_list[grepl(
-      paste0("simulation", ids_to_run, ".apsimx"),
-      files_list
-    )]
-    print(length(files_list))
-    print(files_list)
+  if (length(apsimx_filepaths) == 0) {
+    print("0 simulations to run. Returning...")
+    return(NULL)
   }
 
   if (parallel) {
@@ -233,7 +245,8 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5
       FUN = just_run_apsimx,
       force = force_rerun,
       cleanup = cleanup,
-      simulations_names = simulations_names
+      simulations_names = simulations_names,
+      dry_run = dry_run
     )
     parallel::stopCluster(cl)
   } else {
@@ -242,7 +255,8 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5
       FUN = just_run_apsimx,
       force = force_rerun,
       cleanup = cleanup,
-      simulations_names = simulations_names
+      simulations_names = simulations_names,
+      dry_run = dry_run
     )
   }
 }
