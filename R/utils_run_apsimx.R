@@ -84,9 +84,11 @@ just_run_apsimx <- function(
 
   # Remove unused files
   if (cleanup) {
-    pattern <- "temp|db|bak"
-    if (!is.na(xlsx_or_met_folder))   pattern <- "temp|db|bak|xlsx"
-    to_be_deleted <- list.files(dirname(apsimx_filepath), pattern = pattern, full.names = TRUE)
+    basename_wo_ext <- gsub(".apsimx", ".", basename(apsimx_filepath))
+    to_be_deleted <- list.files(
+      dirname(apsimx_filepath),
+      pattern = paste0(basename_wo_ext, "db"),
+      full.names = TRUE)
     suppressWarnings(file.remove(to_be_deleted))
   }
 
