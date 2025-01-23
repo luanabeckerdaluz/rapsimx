@@ -165,18 +165,20 @@ generate_apsimx <- function(df_row, folder, sensit_base_sim_filepath) {
   return(filepath_sim)
 }
 
-# generate_apsimx_and_run <- function(df_row, folder, force, sensit_base_sim_filepath) {
-#   apsimx_filepath <- generate_apsimx(
-#     df_row,
-#     folder,
-#     sensit_base_sim_filepath
-#   )
-#   just_run_apsimx(
-#     apsimx_filepath = apsimx_filepath,
-#     force = force,
-#     xlsx_or_met_folder = DADOS_MET_FOLDER
-#   )
-# }
+generate_apsimx_and_run <- function(df_row, folder, sensit_base_sim_filepath, cleanup = TRUE, force_rerun = TRUE, simulations_names = NA, dry_run = FALSE) {
+  apsimx_filepath <- generate_apsimx(
+    df_row,
+    folder,
+    sensit_base_sim_filepath
+  )
+  just_run_apsimx(
+    apsimx_filepath = apsimx_filepath,
+    force = force_rerun,
+    cleanup = cleanup,
+    simulations_names = simulations_names,
+    dry_run = dry_run
+  )
+}
 
 generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath, N = 5, runs_only_some, parallel){
   # Stop if base sim does not exist

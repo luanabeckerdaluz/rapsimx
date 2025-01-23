@@ -53,14 +53,10 @@ print_stats_of_folder <- function(folder_path){
   print(paste("Number of apsimxs:", length(apsimx_filepaths)))
   print("Some files:")
   print(paste0("    ", apsimx_filepaths[1:5]))
-}
 
-list_apsimx_filepaths <- function(folder_path) {
   apsimx_filepaths <- list.files(folder_path, pattern = ".apsimx", full.names = TRUE)
-  return(apsimx_filepaths)
+  print(apsimx_filepaths[1:5])
 }
-
-
 
 generate_samples_csv <- function(problem, method, N_SAMPLES) {
   # method = "LHS", "FAST", "SOBOL"

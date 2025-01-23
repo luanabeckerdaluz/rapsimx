@@ -193,7 +193,7 @@ organize_harvest_csv <- function(csv_filepath, sim_id = NA, check_32_fields_use_
   }
 
   if (check_32_fields_use_id && sim_id && nrow(summarized_df) != 32) {
-    print(paste0("HarvestReport id=", sim_id, " is missing fields! Count=", nrow(summarized_df)))
+    print(paste0("Report id ", sim_id, " is missing fields! (", nrow(summarized_df), " / ", 32, ")"))
   }
 }
 
