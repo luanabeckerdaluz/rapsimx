@@ -3,20 +3,15 @@ just_run_apsimx <- function(
   apsimx_filepath,
   force = TRUE,
   summarize = TRUE,
-  cleanup = TRUE,
+  csv_or_db = "csv",
   read_output = FALSE,
   simulations_names = NA,
-  report_table = "DailyReport",
   from_config_file = NA,
   xlsx_or_met_folder = NA,
   dry_run = FALSE
 ) {
 
   # Check inputs
-  report_options <- c("DailyReport", "HarvestReport")
-  if (!report_table %in% report_options) {
-    stop(paste("Incorrect report table! Options are", paste(report_options, collapse = ", ")))
-  }
   if (!file.exists(apsimx_filepath)){
     stop(paste("ERROR! apsimx simulation", apsimx_filepath, "does not exist!"))
   }
@@ -34,7 +29,7 @@ just_run_apsimx <- function(
   }
 
   # If this csv already exists, skip
-  csv_filepath <- gsub("\\.apsimx$", paste0(".", report_table, ".csv"), apsimx_filepath)
+  csv_filepath <- gsub("\\.apsimx$", ".HarvestReport.csv", apsimx_filepath)
   if (file.exists(csv_filepath) && !force) {
     print(paste0("file ", csv_filepath, " exists! Returning..."))
   }
@@ -48,12 +43,16 @@ just_run_apsimx <- function(
     }
     command <- paste0(
       command,
-      " --csv",
       " --single-threaded=FALSE",
       " --cpu-count=", CONFIG_MULTICORES
     )
+    # If setting field names, concat names
     if (is.character(simulations_names)) {
       command <- paste0(command, " --simulation-names='", paste0(simulations_names, collapse = "|"), "'")
+    }
+    # If running using csv, add csv parameter
+    if (csv_or_db == "csv") {
+      command <- paste0(command, " --csv")
     }
     # command <- paste0(
     #     "docker run -i --rm --cpus='1.0' -v ",
@@ -82,8 +81,9 @@ just_run_apsimx <- function(
     }
   }
 
-  # Remove unused files
-  if (cleanup) {
+  # If run using csv files, remove all .db files
+  # If run using just db, remove all .db- files
+  if (csv_or_db == "csv") {
     basename_wo_ext <- gsub(".apsimx", ".", basename(apsimx_filepath))
     to_be_deleted <- list.files(
       dirname(apsimx_filepath),
@@ -91,6 +91,14 @@ just_run_apsimx <- function(
       full.names = TRUE)
     suppressWarnings(file.remove(to_be_deleted))
   }
+  # else if (csv_or_db == "db") {
+  #   basename_wo_ext <- gsub(".apsimx", ".", basename(apsimx_filepath))
+  #   to_be_deleted <- list.files(
+  #     dirname(apsimx_filepath),
+  #     pattern = paste0(basename_wo_ext, "db-"),
+  #     full.names = TRUE)
+  #   suppressWarnings(file.remove(to_be_deleted))
+  # }
 
   if (read_output) {
     csv <- NA
@@ -98,7 +106,6 @@ just_run_apsimx <- function(
       # warning("Please, verify if values are consistent to use the correct correction method depending if Windows (new_report_run2 or different_version methods) or Linux (use normal method)")
       csv <- summarize_simcsv(
         csv_filepath = csv_filepath,
-        daily_or_harvest = report_table,
         check_32_fields_use_id = FALSE,
         return_with_NA_for_daily = TRUE
       )
@@ -215,7 +222,23 @@ generate_apsimx_from_df <- function(samples_df, folder, sensit_base_sim_filepath
   }
 }
 
-run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5, simulations_names = NA, force_rerun = TRUE, ids_to_run = NA, parallel, dry_run = FALSE) {
+run_apsimx_from_folder <- function(
+  folder, 
+  runs_only_some,
+  csv_or_db = 'csv',
+  N = 5,
+  simulations_names = NA,
+  force_rerun = TRUE,
+  ids_to_run = NA,
+  parallel = TRUE,
+  dry_run = FALSE) {
+
+  # Check inputs
+  csv_or_db_options <- c("csv", "db")
+  if (!csv_or_db %in% csv_or_db_options) {
+    stop(paste("Incorrect csv_or_db! Options are", paste(csv_or_db_options, collapse = ", ")))
+  }
+  
   # List files
   apsimx_filepaths <- list.files(
     path = folder,
@@ -248,7 +271,7 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5
       X = apsimx_filepaths,
       FUN = just_run_apsimx,
       force = force_rerun,
-      cleanup = cleanup,
+      csv_or_db = csv_or_db,
       simulations_names = simulations_names,
       dry_run = dry_run
     )
@@ -258,7 +281,7 @@ run_apsimx_from_folder <- function(folder, runs_only_some, cleanup = TRUE, N = 5
       X = apsimx_filepaths,
       FUN = just_run_apsimx,
       force = force_rerun,
-      cleanup = cleanup,
+      csv_or_db = csv_or_db,
       simulations_names = simulations_names,
       dry_run = dry_run
     )
