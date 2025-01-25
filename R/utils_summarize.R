@@ -197,7 +197,7 @@ organize_harvest_csv <- function(csv_filepath, sim_id = NA, check_32_fields_use_
   }
 }
 
-summarize_simcsv <- function(csv_filepath, daily_or_harvest = "DailyReport", return_with_NA_for_daily = TRUE, check_32_fields_use_id = FALSE) {
+summarize_simcsv <- function(csv_filepath, daily_or_harvest = "HarvestReport", return_with_NA_for_daily = TRUE, check_32_fields_use_id = FALSE) {
   # daily_or_harvest = 'DailyReport' or 'HarvestReport'
   # check_32_fields_use_id = FALSE or TRUE
   
@@ -281,6 +281,120 @@ summarize_csvs_from_filelist <- function(
     daily_or_harvest = daily_or_harvest,
     return_with_NA_for_daily = return_with_NA_for_daily,
     check_32_fields_use_id = check_32_fields_use_id
+  )
+  parallel::stopCluster(cl)
+
+  # Make big df
+  df_all_summarized <- dplyr::bind_rows(res)
+
+  return(df_all_summarized)
+}
+
+
+
+
+list_db_tables <- function(db_filepath) {
+  conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
+  print(RSQLite::dbListTables(conn))
+  RSQLite::dbDisconnect(conn)
+}
+
+read_db_table <- function(db_filepath, table) {
+  conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
+  hr <- RSQLite::dbReadTable(conn, table)
+  RSQLite::dbDisconnect(conn)
+  return(hr)
+}
+
+summarize_sim_db <- function(db_filepath, number_of_fields = NA) {
+  # Handle input errors
+  if (!file.exists(db_filepath)) {
+    stop("ERROR! db filepath does sim does not exist!")
+  }
+
+  # list_db_tables(db_filepath)
+  
+  # CheckpointID   SimulationID   Zone   Clock.Today...
+  df_db_harvest_report <- read_db_table(db_filepath, "HarvestReport")
+  # print(head(df_db_harvest_report))
+
+  # ID   Name   FolderName
+  df_db_simulations <- read_db_table(db_filepath, "_Simulations") %>%
+    select(-FolderName) %>%
+    rename(SimulationID = ID)
+  # print(head(df_db_simulations))
+
+  # print(head(df_db_harvest_report))
+  # print(head(df_db_harvest_report))
+  # print(head(read_db_table(db_filepath, "_Simulations")))
+
+  summarized_df <- df_db_harvest_report %>%
+    merge(df_db_simulations, by = "SimulationID") %>%
+    dplyr::rename(
+      field = Name,
+      yield = Yield,
+      biomass = Biomass,
+      # emergence = Soybean.Phenology.EmergenceDAS,
+      # flowering = Soybean.Phenology.StartFloweringDAS,
+      # start_pod_development = Soybean.Phenology.StartPodDevelopmentDAS,
+      # start_grain_filling = Soybean.Phenology.StartGrainFillingDAS,
+      # end_grain_filling = Soybean.Phenology.EndGrainFillDAS,
+      maturity = Soybean.Phenology.MaturityDAS
+    ) %>%
+    dplyr::select(field, yield, biomass, maturity)
+    # dplyr::select(field, yield, biomass, emergence, flowering, start_pod_development,
+    #   start_grain_filling, end_grain_filling, maturity)
+
+  rownames(summarized_df) <- NULL
+  
+  sim_id <- get_id_from_filepath(db_filepath)
+  if (!is.na(sim_id)) {
+    summarized_df <- summarized_df %>%
+      dplyr::mutate(id = sim_id) %>%
+      dplyr::select(id, everything())
+  }
+
+  if (!is.na(number_of_fields) && sim_id && nrow(summarized_df) != number_of_fields) {
+    print(paste0("Report id ", sim_id, " is missing fields! (", nrow(summarized_df), " / ", number_of_fields, ")"))
+  }
+
+  return(summarized_df)
+}
+
+summarize_harvest_dbs_from_filelist <- function(
+  folder,
+  ids_to_summarize = NA,
+  number_of_fields = NA,
+  runs_only_some = FALSE,
+  N = 5) {
+
+  # List files
+  files_list <- list.files(
+    path = folder,
+    pattern = ".db",
+    full.names = TRUE
+  )
+
+  # If ids_to_summarize is defined, summarize just for these ids
+  if (is.numeric(ids_to_summarize)) {
+    files_list <- files_list[grepl(
+      paste0("simulation", ids_to_summarize, ".db", collapse = "|"),
+      files_list
+    )]
+    # print(length(files_list))
+    # print(files_list)
+  }
+
+  # If necessary, summarize just N sims
+  if (runs_only_some && length(files_list) > N)   files_list <- files_list[1:N]
+
+  # Summarize dbs
+  cl <- parallel::makeCluster(CONFIG_MULTICORES)
+  future::plan(future::cluster, workers = cl)
+  res <- future.apply::future_lapply(
+    X = files_list,
+    FUN = summarize_sim_db,
+    number_of_fields = number_of_fields
   )
   parallel::stopCluster(cl)
 
