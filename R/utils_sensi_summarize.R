@@ -110,13 +110,6 @@ summarize_harvest_dbs <- function(
   dry_run = FALSE
   ) {
 
-  # Print parallel status
-  if (parallel) {
-    custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
-  } else {
-    custom_cat("Not using parallel")
-  }
-
   # Check if parameters are integer
   if (!is.na(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
     custom_stop("'number_of_fields_to_check' must be an integer (e.g. '32L')")
@@ -139,7 +132,7 @@ summarize_harvest_dbs <- function(
   }
 
   # Simulation folder
-  sims_folder <- file.path(sensi_folder, "simulations")
+  sims_folder <- file.path(sensi_folder, "sims_and_met")
 
   # List files
   files_list <- list.files(
@@ -179,37 +172,19 @@ summarize_harvest_dbs <- function(
     return(NULL)
   }
 
-  # Create progress bar
-  pb_summarize <- txtProgressBar(min = 0, max = length(files_list), style = 3)
-
-  apply_parameters <- list(
-    X = seq_along(files_list),
+  res <- lapply_parallel_progressbar(
+    X_must_be_num_array = seq_along(files_list),
     FUN = function(i) {
-      df <- summarize_sim_db(
+      summarize_sim_db(
         db_filepath = files_list[i],
         number_of_fields_to_check = number_of_fields_to_check
       )
-      setTxtProgressBar(pb_summarize, i)
-      return(df)
-    }
+    },
+    parallel = parallel
   )
 
-  # Summarize dbs
-  if (parallel) {
-    cl <- parallel::makeCluster(CONFIG_MULTICORES)
-    future::plan(future::cluster, workers = cl)
-    results <- do.call(future.apply::future_lapply, apply_parameters)
-    parallel::stopCluster(cl)
-  }
-  else {
-    results <- do.call(lapply, apply_parameters)
-  }
-
-  # Close progress bar
-  close(pb_summarize)
-
   # Make big df
-  df_all_summarized <- dplyr::bind_rows(results)
+  df_all_summarized <- dplyr::bind_rows(res)
 
   # Save csv
   write.csv(df_all_summarized, summarized_csv_filepath, row.names = FALSE)

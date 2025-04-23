@@ -7221,7 +7221,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "dados-met/mambore_2013-2016.xlsx",
+          "FileName": "mambore_2013-2016.xlsx",
           "ExcelWorkSheetName": null,
           "Name": "Weather",
           "ResourceName": null,

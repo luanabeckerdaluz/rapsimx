@@ -64,7 +64,7 @@ generate_apsimxs <- function(
     samples_df <- read.csv(samples_csv_filepath)
   }
 
-  sims_folder <- file.path(sensi_folder, "simulations")
+  sims_folder <- file.path(sensi_folder, "sims_and_met")
   # Stop if simulations folder does not exist on sensi folder
   if (!file.exists(sims_folder)) {
     custom_stop("sensi folder ", sims_folder, " does not exist!")

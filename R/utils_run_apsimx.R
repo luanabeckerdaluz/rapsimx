@@ -83,17 +83,10 @@ run_apsimxs <- function(
   dry_run = FALSE
   ) {
 
-  # Print parallel status
-  if (parallel) {
-    custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
-  } else {
-    custom_cat("Not using parallel")
-  }
-
   # Check if simulation folder exists on sensi folder
-  sims_folder <- file.path(sensi_folder, "simulations")
+  sims_folder <- file.path(sensi_folder, "sims_and_met")
   if (!file.exists(sims_folder)) {
-    custom_stop(paste0("'simulations' folder does not exist on sensi folder ", sensi_folder, "!"))
+    custom_stop(paste0(basename(sims_folder), " folder does not exist on sensi folder ", sensi_folder, "!"))
   }
 
   # List files
@@ -132,7 +125,7 @@ run_apsimxs <- function(
   custom_cat_nobreaks(paste0("Running ", length(apsimx_filepaths), " apsimx simulations..."))
 
   res <- lapply_parallel_progressbar(
-    X_must_be_num_array = seq_len(apsimx_filepaths),
+    X_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
       just_run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],

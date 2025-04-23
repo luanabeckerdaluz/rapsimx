@@ -1,19 +1,32 @@
-sensi_folder_generate <- function(folderpath, met_folderpath, overwrite = FALSE) {
-  # Generate sensi folder
-  sensi_folder <- create_tmp_dir(
-    folderpath = folderpath,
-    copy_met_data_from = met_folderpath,
-    overwrite = overwrite
-  )
+generate_sensi_folder <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
+  # normalize folderpath
+  folderpath <- normalizePath(folderpath)
 
-  # Create simulations folder inside tmp
-  tmp_simulations_folder <- file.path(sensi_folder, "simulations")
-  if (!dir.exists(tmp_simulations_folder)) {
-    dir.create(tmp_simulations_folder, recursive = TRUE)
+  # If tmp folder doesn't exist, create and copy met data
+  if (overwrite || !file.exists(folderpath)) {
+    # Crete tmp folder
+    dir.create(folderpath, recursive = TRUE, showWarnings = FALSE)
+
+    # Create sims_and_met folder
+    tmp_simulations_folder <- file.path(folderpath, "sims_and_met")
+    if (!dir.exists(tmp_simulations_folder)) {
+      dir.create(tmp_simulations_folder, recursive = TRUE, showWarnings = FALSE)
+    }
+    # Copy met data to sims_and_met folder
+    file.copy(
+      list.files(copy_met_data_from, full.names = TRUE),
+      tmp_simulations_folder,
+      recursive = TRUE,
+      overwrite = TRUE
+    )
+
+    custom_cat(paste0("Folder ", folderpath, " was created!"))
+  }
+  else {
+    custom_stop(paste0(folderpath, " folder already exists! Please choose a new folder name or set overwrite parameter to TRUE!"))
   }
 
-  custom_cat(paste0("Folder ", sensi_folder, " was created!"))
-  return(sensi_folder)
+  return(folderpath)
 }
 
 load_problem <- function(folder = NA) {
@@ -59,8 +72,7 @@ generate_samples_csv <- function(
   method = NA,
   N_SAMPLES = NA,
   overwrite = FALSE,
-  save_csv_to_folder,
-  plot
+  save_csv_to_folder
   ) {
 
   # Skip generating samples if "samples.csv" already exists on sensi folder

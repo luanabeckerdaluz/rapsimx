@@ -1,29 +1,3 @@
-create_tmp_dir <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
-  # normalize folderpath
-  folderpath <- normalizePath(folderpath)
-
-  # If tmp folder doesn't exist, create and copy met data
-  if (overwrite || !file.exists(folderpath)) {
-    dir.create(folderpath, recursive = TRUE, showWarnings = FALSE)
-    # Create met data folder
-    met_data_folderpath <- file.path(folderpath, "met_data")
-    dir.create(met_data_folderpath, recursive = TRUE, showWarnings = FALSE)
-    # Copy met data
-    met_filepaths <- list.files(copy_met_data_from, full.names = TRUE)
-    file.copy(
-      met_filepaths,
-      met_data_folderpath,
-      recursive = TRUE,
-      overwrite = TRUE
-    )
-  }
-  else {
-    custom_stop(paste0(folderpath, " folder already exists! Please choose a new folder name or set overwrite parameter to TRUE!"))
-  }
-
-  return(folderpath)
-}
-
 print_stats_of_folder <- function(folder_path){
   custom_summary("Summary:")
   custom_summary(paste0("  Folder = ", folder_path))
@@ -52,8 +26,9 @@ lapply_parallel_progressbar <- function(X_must_be_num_array, FUN, parallel = FAL
   lapply_arguments <- list(
     X = X_must_be_num_array,
     FUN = function(i) {
-      FUN(i)
+      res <- FUN(i)
       if (!parallel) setTxtProgressBar(pb_generate, i)
+      return(res)
     }
   )
 
