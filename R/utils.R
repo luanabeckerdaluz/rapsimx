@@ -1,113 +1,76 @@
-get_id_from_filepath <- function(filepath) {
-  basename <- basename(filepath)
-  # id <- as.numeric(str_extract_all(basename, "\\d+"))
-  id <- as.numeric(regmatches(basename, gregexpr("\\d+", basename)))
-  return(id)
-}
+create_tmp_dir <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
+  # normalize folderpath
+  folderpath <- normalizePath(folderpath)
 
-create_tmp_dir <- function(folder_path, copy_met_data = TRUE) {
   # If tmp folder doesn't exist, create and copy met data
-  if (!file.exists(folder_path)) {
-    dir.create(folder_path, recursive = TRUE)
-    if (copy_met_data) {
-      # Copy met data
-      met_filepaths <- list.files(DADOS_MET_FOLDER, full.names = TRUE)
-      file.copy(
-        met_filepaths,
-        folder_path,
-        recursive = TRUE,
-        overwrite = TRUE
-      )
-    }
+  if (overwrite || !file.exists(folderpath)) {
+    dir.create(folderpath, recursive = TRUE, showWarnings = FALSE)
+    # Create met data folder
+    met_data_folderpath <- file.path(folderpath, "met_data")
+    dir.create(met_data_folderpath, recursive = TRUE, showWarnings = FALSE)
+    # Copy met data
+    met_filepaths <- list.files(copy_met_data_from, full.names = TRUE)
+    file.copy(
+      met_filepaths,
+      met_data_folderpath,
+      recursive = TRUE,
+      overwrite = TRUE
+    )
   }
   else {
-    warning(paste0(folder_path, " folder already exists! New met files were not copied! \nPlease make sure the folder name is correct in order not to overwrite important runs!"))
+    custom_stop(paste0(folderpath, " folder already exists! Please choose a new folder name or set overwrite parameter to TRUE!"))
   }
-}
 
-create_tmp_dir_from_base_folder <- function(path_from_base_folder, copy_met_data = TRUE) {
-  folder_filepath <- file.path(CONST_TMP_FOLDER, path_from_base_folder)
-  create_tmp_dir(
-    folder_path = folder_filepath,
-    copy_met_data = copy_met_data
-  )
-  return(folder_filepath)
-}
-
-sim_list_to_df <- function(sim_list, sim_id){
-  dfs <- lapply(names(sim_list), function(list_item_name){
-    list_item <- sim_list[[list_item_name]] %>%
-      mutate(SimulationName = list_item_name)
-    return(list_item)
-  })
-  merged <- bind_rows(dfs)
-  summarized <- summarize_simdf2_eval(merged, sim_id)
-  return(summarized)
+  return(folderpath)
 }
 
 print_stats_of_folder <- function(folder_path){
-  # Check number of csvs Report in folder
-  print(paste("Number of csvs:", length(list.files(folder_path, pattern = "HarvestReport"))))
-  # Check number of apsimx in folder
-  apsimx_filepaths <- list.files(folder_path, pattern = ".apsimx", full.names = TRUE)
-  print(paste("Number of apsimxs:", length(apsimx_filepaths)))
-  print("Some files:")
-  print(paste0("    ", apsimx_filepaths[1:5]))
+  custom_summary("Summary:")
+  custom_summary(paste0("  Folder = ", folder_path))
 
+  # Check number of dbs, csvs and apsimx files in folder
+  custom_summary(paste("  Number of csvs:", length(list.files(folder_path, pattern = "HarvestReport"))))
+  custom_summary(paste("  Number of dbs:", length(list.files(folder_path, pattern = ".db"))))
   apsimx_filepaths <- list.files(folder_path, pattern = ".apsimx", full.names = TRUE)
-  print(apsimx_filepaths[1:5])
+  custom_summary(paste("  Number of apsimxs:", length(apsimx_filepaths)))
 }
 
-generate_samples_csv <- function(problem, method, N_SAMPLES) {
-  # method = "LHS", "FAST", "SOBOL"
-
-  set.seed(1111)
-
-  if (method == "LHS") {
-    convert_row_to_var_bounds <- function(row) {
-      for (i in 1:length(row)) {
-        lb <- variable_bounds[[i]][1]
-        ub <- variable_bounds[[i]][2]
-        range <- ub - lb
-        row[i] <- lb + row[i] * range
-      }
-      return(row)
-    }
-    N_VARS <- as.integer(problem$num_vars)
-    # df_samples_norm <- import("scipy.stats.qmc")$LatinHypercube(d = N_VARS)$random(n = N_SAMPLES)
-    df_samples_norm <- randomLHS(N_SAMPLES, N_VARS)
-    # Convert df to var bounds
-    for (i in 1:nrow(df_samples_norm)) {
-      df_samples_norm[i, ] <- convert_row_to_var_bounds(df_samples_norm[i, ])
-    }
-    samples <- df_samples_norm
-  } else if (method == "FAST") {
-    sampler <- reticulate::import("SALib.sample.fast_sampler")
-    samples <- sampler$sample(problem, N_SAMPLES)
-  } else if (method == "SOBOL") {
-    sampler <- reticulate::import("SALib.sample.sobol")
-    samples <- sampler$sample(problem, N_SAMPLES, calc_second_order = TRUE)
+lapply_parallel_progressbar <- function(X_must_be_num_array, FUN, parallel = FALSE) {
+  if (parallel) {
+    custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
   } else {
-    stop("invalid option! Available: LHS, FAST and SOBOL")
+    custom_cat("Not using parallel")
   }
-  head(samples)
 
-  samples_df <- as.data.frame(samples) %>%
-    `colnames<-`(problem$names) %>%
-    dplyr::mutate(id = as.integer(rownames(.))) %>%
-    dplyr::select(id, everything())
-  dim(samples_df)
-  head(samples_df)
+  # Create progress bar
+  pb_generate <- NULL
+  if (!parallel) {
+    pb_generate <- txtProgressBar(min = 0, max = length(X_must_be_num_array), style = 3)
+  }
 
-  
-  return(samples_df)
-}
+  # Run lapply
+  lapply_arguments <- list(
+    X = X_must_be_num_array,
+    FUN = function(i) {
+      FUN(i)
+      if (!parallel) setTxtProgressBar(pb_generate, i)
+    }
+  )
 
+   # Configure parallel or sequential
+  if (parallel) {
+    cl <- parallel::makeCluster(CONFIG_MULTICORES)
+    future::plan(future::cluster, workers = cl)
+    res <- do.call(future.apply::future_lapply, lapply_arguments)
+    parallel::stopCluster(cl)
+  } else {
+    # future::plan(future::sequential)
+    # res <- do.call(future.apply::future_lapply, lapply_arguments)
+    res <- do.call(lapply, lapply_arguments)
+  }
 
-plot_samples_distribution <- function(samples_df) {
-  samples_df %>%
-    tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
-    ggplot(aes(x = 1:nrow(.), y = value)) +
-      facet_wrap(variable ~ ., scale = "free_y") +
-      geom_point(size = 1)
+  # Close progress bar
+  if (!parallel) close(pb_generate)
+
+  return(res)
 }
