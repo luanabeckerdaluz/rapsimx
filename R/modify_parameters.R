@@ -33,203 +33,171 @@ replace_KL <- function(model, node, value){
   return(new)
 }
 
-replace_KL_jsonstring2 <- function(apsimx_filepath, kl_array){
-  json_string <- gsub("\\s+", "", paste(readLines(apsimx_filepath), collapse = "\n"))
-  updated_json <- gsub('"KL":\\[[0-9.,]+\\]', paste0('"KL":[', paste(kl_array, collapse = ","), ']'), json_string)
-  modified_json_pretty <- jsonlite::prettify(updated_json, indent = 2)
-  writeLines(modified_json_pretty, apsimx_filepath)
-}
+# replace_KL_jsonstring2 <- function(apsimx_filepath, kl_array){
+#   json_string <- gsub("\\s+", "", paste(readLines(apsimx_filepath), collapse = "\n"))
+#   updated_json <- gsub("KL":\\[[0-9.,]+\\]", paste0("KL":[", paste(kl_array, collapse = ","), "]"), json_string)
+#   modified_json_pretty <- jsonlite::prettify(updated_json, indent = 2)
+#   writeLines(modified_json_pretty, apsimx_filepath)
+# }
 
-replace_values2 <- function(
+replace_values <- function(
   apsimx_path,
   VERBOSE = FALSE,
-  phen_VegAndRepTherTimRes_bothX3 = NA, # 10.0, 20.0, 30.0, 40.0
-  phen_VegAndRepPhoMod_bothX1 = NA, # 14.43, 21.19
-  phen_VegTherTimeResp_X3 = NA, # 10.0, 20.0, 30.0, 40.0
-  phen_RepTherTimeResp_X3 = NA, # 10.0, 20.0, 30.0, 40.0
-  phen_VegPhoMod_X1 = NA, # 14.43, 21.19
-  phen_RepPhoMod_X1 = NA, # 14.43, 21.19
-  phen_VegetativeTarget = NA, # 200.0
-  phen_EarlyFloweringTarget = NA, # 110.0
-  phen_EarlyPodDevTarget = NA, #140
-  phen_FractGrainFill = NA, # 0.05
-  phen_EntGrainFill = NA, # 500.0
-  phen_MidGrainFill = NA, # 0.5
-  phen_Maturing = NA, # 45.0
-  phen_Ripening = NA, # 45.0
-  phen_shootlag = NA, # 10.0
-  phen_shootrate = NA, # 1.0
-  leaf_RUE = NA, # 1.2
-  leaf_AreaLargLeaf = NA, # 0.006
-  leaf_Phyllochron = NA, # 45.0
-  leaf_ExtinctionCoef_Y1 = NA, # 0.6
-  grain_HarvIndex = NA, # 0.5
-  root_EarlyFrontVel = NA, # 30.0
-  root_LateFrontVel = NA, # 5.0
-  nodule_VegGrowthRate = NA, # 0.006
-  nodule_RepGrowthRate = NA, # 0.002
-  nodule_MaxFixRate = NA, # 0.6
-  soil_KL = NA # 0.06 0.06 0.06 0.04 0.04 0.02
+  list_params_values
 ) {
-
-  vars <- c(phen_VegAndRepTherTimRes_bothX3, phen_VegAndRepPhoMod_bothX1, phen_VegTherTimeResp_X3, phen_RepTherTimeResp_X3, phen_VegPhoMod_X1, phen_RepPhoMod_X1, phen_VegetativeTarget, phen_EarlyFloweringTarget, phen_EarlyPodDevTarget, phen_FractGrainFill, phen_EntGrainFill, phen_MidGrainFill, phen_Maturing, phen_Ripening, phen_shootlag, phen_shootrate, leaf_RUE, leaf_AreaLargLeaf, leaf_Phyllochron, leaf_ExtinctionCoef_Y1, grain_HarvIndex, root_EarlyFrontVel, root_LateFrontVel, nodule_VegGrowthRate, nodule_RepGrowthRate, nodule_MaxFixRate, soil_KL)
-  #print(paste(vars, collapse="-"))
-
   # Read apsimx model that will be modified
   new_model <- rapsimng::read_apsimx(apsimx_path)
 
-  if (!is.na(phen_VegAndRepTherTimRes_bothX3)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativeThermalTime.Response and [Phenology].ReproductiveThermalTime.Response")
-    new_model <- replace_X(new_model, '[Phenology].VegetativeThermalTime.Response', 3, phen_VegAndRepTherTimRes_bothX3)
-    new_model <- replace_X(new_model, '[Phenology].ReproductiveThermalTime.Response', 3, phen_VegAndRepTherTimRes_bothX3)
-  }
-  if (!is.na(phen_VegAndRepPhoMod_bothX1)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativePhotoperiodModifier.XYPairs and [Phenology].ReproductivePhotoperiodModifier.XYPairs")
-    # 14.43, 21.19
-    new_model <- replace_X(new_model, '[Phenology].VegetativePhotoperiodModifier.XYPairs', 1, phen_VegAndRepPhoMod_bothX1)
-    # 14.43, 21.19
-    new_model <- replace_X(new_model, '[Phenology].ReproductivePhotoperiodModifier.XYPairs', 1, phen_VegAndRepPhoMod_bothX1)
-  }
-  if (!is.na(phen_VegTherTimeResp_X3)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativeThermalTime.Response")
-    # 10.0, 20.0, 30.0, 40.0
-    new_model <- replace_X(new_model, '[Phenology].VegetativeThermalTime.Response', 3, phen_VegTherTimeResp_X3)
-  }
-  if (!is.na(phen_RepTherTimeResp_X3)) {
-    if (VERBOSE) print("alterando [Phenology].ReproductiveThermalTime.Response")
-    # 10.0, 15.0, 30.0, 40.0
-    new_model <- replace_X(new_model, '[Phenology].ReproductiveThermalTime.Response', 3, phen_RepTherTimeResp_X3)
-  }
-  if (!is.na(phen_VegPhoMod_X1)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativePhotoperiodModifier.XYPairs")
-    # 14.43, 21.19
-    new_model <- replace_X(new_model, '[Phenology].VegetativePhotoperiodModifier.XYPairs', 1, phen_VegPhoMod_X1)
-  }
-  if (!is.na(phen_RepPhoMod_X1)) {
-    if (VERBOSE) print("alterando [Phenology].ReproductivePhotoperiodModifier.XYPairs")
-    # 14.43, 21.19
-    new_model <- replace_X(new_model, '[Phenology].ReproductivePhotoperiodModifier.XYPairs', 1, phen_RepPhoMod_X1)
-  }
-  if (!is.na(phen_VegetativeTarget)) {
-    if (VERBOSE) print("alterando [Phenology].Vegetative.Target")
-    # 200.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].Vegetative.Target', phen_VegetativeTarget)
-  }
-  if (!is.na(phen_EarlyFloweringTarget)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyFlowering.Target")
-    # 200.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].EarlyFlowering.Target', phen_EarlyFloweringTarget)
-  }
-  if (!is.na(phen_EarlyPodDevTarget)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyPodDevelopment.Target")
-    # 140.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].EarlyPodDevelopment.Target', phen_EarlyPodDevTarget)
-  }
-  if (!is.na(phen_FractGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyGrainFilling.Target.FractionofGrainfilling")
-    # 0.05
-    new_model <- replace_FixedValue(new_model, '[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling', phen_FractGrainFill)
-  }
-  if (!is.na(phen_EntGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].LateGrainFilling.Target.EntireGrainfillPeriod")
-    # 500.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod', phen_EntGrainFill)
-  }
-  if (!is.na(phen_MidGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling")
-    # 0.5
-    new_model <- replace_FixedValue(new_model, '[Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling', phen_MidGrainFill)
-  }
-  if (!is.na(phen_Maturing)) {
-    if (VERBOSE) print("alterando [Phenology].Maturing.Target")
-    # 45.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].Maturing.Target', phen_Maturing)
-  }
-  if (!is.na(phen_Ripening)) {
-    if (VERBOSE) print("alterando [Phenology].Ripening.Target")
-    # 45.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].Ripening.Target', phen_Ripening)
-  }
-  if (!is.na(phen_shootlag)) {
-    if (VERBOSE) print("alterando [Phenology].Emerging.Target.ShootLag")
-    # 10
-    new_model <- replace_FixedValue(new_model, '[Phenology].Emerging.Target.ShootLag', phen_shootlag)
-  }
-  if (!is.na(phen_shootrate)) {
-    if (VERBOSE) print("alterando [Phenology].Emerging.Target.DepthxRate.ShootRate")
-    # 1.0
-    new_model <- replace_FixedValue(new_model, '[Phenology].Emerging.Target.DepthxRate.ShootRate', phen_shootrate)
-  }
-  if (!is.na(leaf_RUE)) {
-    if (VERBOSE) print("alterando [Leaf].Photosynthesis.RUE")
-    # 1.2
-    new_model <- replace_FixedValue(new_model, '[Leaf].Photosynthesis.RUE', leaf_RUE)
-  }
-  if (!is.na(leaf_AreaLargLeaf)) {
-    if (VERBOSE) print("alterando [Leaf].AreaLargestLeaf")
-    # 0.006
-    new_model <- replace_FixedValue(new_model, '[Leaf].AreaLargestLeaf', leaf_AreaLargLeaf)
-  }
-  if (!is.na(leaf_Phyllochron)) {
-    if (VERBOSE) print("alterando [Leaf].Phyllochron")
-    # 45.0
-    new_model <- replace_FixedValue(new_model, '[Leaf].Phyllochron', leaf_Phyllochron)
-  }
-  if (!is.na(leaf_ExtinctionCoef_Y1)) {
-    if (VERBOSE) print("alterando [Leaf].ExtinctionCoefficient.XYPairs")
-    # 0.6, 0.4
-    new_model <- replace_Y(new_model, '[Leaf].ExtinctionCoefficient.XYPairs', 1, leaf_ExtinctionCoef_Y1)
-  }
-  if (!is.na(grain_HarvIndex)) {
-    if (VERBOSE) print("alterando [Grain].PotentialHarvestIndex")
-    # 0.5
-    new_model <- replace_FixedValue(new_model, '[Grain].PotentialHarvestIndex', grain_HarvIndex)
-  }
-  if (!is.na(root_EarlyFrontVel)) {
-    if (VERBOSE) print("alterando [Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function")
-    # 30.0
-    new_model <- replace_FixedValue(new_model, '[Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function', root_EarlyFrontVel)
-  }
-  if (!is.na(root_LateFrontVel)) {
-    if (VERBOSE) print("alterando [Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function")
-    # 5.0
-    new_model <- replace_FixedValue(new_model, '[Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function', root_LateFrontVel)
-  }
-  if (!is.na(nodule_VegGrowthRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate")
-    # 0.006
-    new_model <- replace_FixedValue(new_model, '[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate', nodule_VegGrowthRate)
-  }
-  if (!is.na(nodule_RepGrowthRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate")
-    # 0.002
-    new_model <- replace_FixedValue(new_model, '[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate', nodule_RepGrowthRate)
-  }
-  if (!is.na(nodule_MaxFixRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate")
-    # 0.6
-    new_model <- replace_FixedValue(new_model, '[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate', nodule_MaxFixRate)
-  }
-  # if (!is.na(soil_KL)) {
-  #   if (VERBOSE) print("alterando [Soil].Physical.SoybeanSoil")
-  #   # SOIL KL
-  #   new_model <- replace_KL(new_model, '[Soil].Physical.SoybeanSoil', soil_KL)
-  # }
+  # For each names in list_params_values, replace the value in the model
+  res <- lapply(
+    X = names(list_params_values),
+    FUN = function(key) {
+      value <- list_params_values[[key]]
+      # print(paste("Chave:", key, "Valor:", value))
+      switch(
+        key,
+        "phen_VegAndRepTherTimRes_bothX3" = {
+          if (VERBOSE) print("Updating [Phenology].VegetativeThermalTime.Response and [Phenology].ReproductiveThermalTime.Response")
+          new_model <<- replace_X(new_model, "[Phenology].VegetativeThermalTime.Response", 3, value)
+          new_model <<- replace_X(new_model, "[Phenology].ReproductiveThermalTime.Response", 3, value)
+        },
+        "phen_VegAndRepPhoMod_bothX1" = {
+          if (VERBOSE) print("Updating [Phenology].VegetativePhotoperiodModifier.XYPairs and [Phenology].ReproductivePhotoperiodModifier.XYPairs")
+          # 14.43, 21.19
+          new_model <<- replace_X(new_model, "[Phenology].VegetativePhotoperiodModifier.XYPairs", 1, value)
+          # 14.43, 21.19
+          new_model <<- replace_X(new_model, "[Phenology].ReproductivePhotoperiodModifier.XYPairs", 1, value)
+        },
+        "phen_VegTherTimeResp_X3" = {
+          if (VERBOSE) print("Updating [Phenology].VegetativeThermalTime.Response")
+          # 10.0, 20.0, 30.0, 40.0
+          new_model <<- replace_X(new_model, "[Phenology].VegetativeThermalTime.Response", 3, value)
+        },
+        "phen_RepTherTimeResp_X3" = {
+          if (VERBOSE) print("Updating [Phenology].ReproductiveThermalTime.Response")
+          # 10.0, 15.0, 30.0, 40.0
+          new_model <<- replace_X(new_model, "[Phenology].ReproductiveThermalTime.Response", 3, value)
+        },
+        "phen_VegPhoMod_X1" = {
+          if (VERBOSE) print("Updating [Phenology].VegetativePhotoperiodModifier.XYPairs")
+          # 14.43, 21.19
+          new_model <<- replace_X(new_model, "[Phenology].VegetativePhotoperiodModifier.XYPairs", 1, value)
+        },
+        "phen_RepPhoMod_X1" = {
+          if (VERBOSE) print("Updating [Phenology].ReproductivePhotoperiodModifier.XYPairs")
+          # 14.43, 21.19
+          new_model <<- replace_X(new_model, "[Phenology].ReproductivePhotoperiodModifier.XYPairs", 1, value)
+        },
+        "phen_VegetativeTarget" = {
+          if (VERBOSE) print("Updating [Phenology].Vegetative.Target")
+          # 200.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].Vegetative.Target", value)
+        },
+        "phen_EarlyFloweringTarget" = {
+          if (VERBOSE) print("Updating [Phenology].EarlyFlowering.Target")
+          # 200.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].EarlyFlowering.Target", value)
+        },
+        "phen_EarlyPodDevTarget" = {
+          if (VERBOSE) print("Updating [Phenology].EarlyPodDevelopment.Target")
+          # 140.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].EarlyPodDevelopment.Target", value)
+        },
+        "phen_FractGrainFill" = {
+          if (VERBOSE) print("Updating [Phenology].EarlyGrainFilling.Target.FractionofGrainfilling")
+          # 0.05
+          new_model <<- replace_FixedValue(new_model, "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling", value)
+        },
+        "phen_EntGrainFill" = {
+          if (VERBOSE) print("Updating [Phenology].LateGrainFilling.Target.EntireGrainfillPeriod")
+          # 500.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod", value)
+        },
+        "phen_MidGrainFill" = {
+          if (VERBOSE) print("Updating [Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling")
+          # 0.5
+          new_model <<- replace_FixedValue(new_model, "[Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling", value)
+        },
+        "phen_Maturing" = {
+          if (VERBOSE) print("Updating [Phenology].Maturing.Target")
+          # 45.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].Maturing.Target", value)
+        },
+        "phen_Ripening" = {
+          if (VERBOSE) print("Updating [Phenology].Ripening.Target")
+          # 45.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].Ripening.Target", value)
+        },
+        "phen_shootlag" = {
+          if (VERBOSE) print("Updating [Phenology].Emerging.Target.ShootLag")
+          # 10
+          new_model <<- replace_FixedValue(new_model, "[Phenology].Emerging.Target.ShootLag", value)
+        },
+        "phen_shootrate" = {
+          if (VERBOSE) print("Updating [Phenology].Emerging.Target.DepthxRate.ShootRate")
+          # 1.0
+          new_model <<- replace_FixedValue(new_model, "[Phenology].Emerging.Target.DepthxRate.ShootRate", value)
+        },
+        "leaf_RUE" = {
+          if (VERBOSE) print("Updating [Leaf].Photosynthesis.RUE")
+          # 1.2
+          new_model <<- replace_FixedValue(new_model, "[Leaf].Photosynthesis.RUE", value)
+        },
+        "leaf_AreaLargLeaf" = {
+          if (VERBOSE) print("Updating [Leaf].AreaLargestLeaf")
+          # 0.006
+          new_model <<- replace_FixedValue(new_model, "[Leaf].AreaLargestLeaf", value)
+        },
+        "leaf_Phyllochron" = {
+          if (VERBOSE) print("Updating [Leaf].Phyllochron")
+          # 45.0
+          new_model <<- replace_FixedValue(new_model, "[Leaf].Phyllochron", value)
+        },
+        "leaf_ExtinctionCoef_Y1" = {
+          if (VERBOSE) print("Updating [Leaf].ExtinctionCoefficient.XYPairs")
+          # 0.6, 0.4
+          new_model <<- replace_Y(new_model, "[Leaf].ExtinctionCoefficient.XYPairs", 1, value)
+        },
+        "grain_HarvIndex" = {
+          if (VERBOSE) print("Updating [Grain].PotentialHarvestIndex")
+          # 0.5
+          new_model <<- replace_FixedValue(new_model, "[Grain].PotentialHarvestIndex", value)
+        },
+        "root_EarlyFrontVel" = {
+          if (VERBOSE) print("Updating [Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function")
+          # 30.0
+          new_model <<- replace_FixedValue(new_model, "[Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function", value)
+        },
+        "root_LateFrontVel" = {
+          if (VERBOSE) print("Updating [Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function")
+          # 5.0
+          new_model <<- replace_FixedValue(new_model, "[Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function", value)
+        },
+        "nodule_VegGrowthRate" = {
+          if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate")
+          # 0.006
+          new_model <<- replace_FixedValue(new_model, "[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate", value)
+        },
+        "nodule_RepGrowthRate" = {
+          if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate")
+          # 0.002
+          new_model <<- replace_FixedValue(new_model, "[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate", value)
+        },
+        "nodule_MaxFixRate" = {
+          if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate")
+          # 0.6
+          new_model <<- replace_FixedValue(new_model, "[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate", value)
+        }
+      )
+    }
+  )
 
   # Save apsimx
-  # jsonlite::write_json(new_model, apsimx_path, pretty = TRUE, auto_unbox = TRUE, null = 'null', digits=20)
+  # jsonlite::write_json(new_model, apsimx_path, pretty = TRUE, auto_unbox = TRUE, null = "null", digits=20)
   # write_apsimx(new_model, apsimx_path)
-
   to_json <- rjson::toJSON(new_model)
   pretty <- jsonlite::prettify(to_json, indent = 2)
   writeLines(pretty, apsimx_path)
-
-  # Modify KL
-  if (!is.na(soil_KL)) {
-    if (VERBOSE) print("alterando [Soil].Physical.SoybeanSoil")
-    kl_array <- c(soil_KL, soil_KL, soil_KL, 0.04, 0.04, 0.02)
-    replace_KL_jsonstring2(apsimx_filepath = apsimx_path, kl_array = kl_array)
-  }
 }
 
 
@@ -312,7 +280,7 @@ write_config_file <- function(
   )
   
   if (!is.na(phen_VegAndRepTherTimRes_bothX3)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativeThermalTime.Response and [Phenology].ReproductiveThermalTime.Response")
+    if (VERBOSE) print("Updating [Phenology].VegetativeThermalTime.Response and [Phenology].ReproductiveThermalTime.Response")
     content <- c(
       content,
       paste0("[Phenology].VegetativeThermalTime.Response.X = 10.0, 20.0, ", phen_VegAndRepTherTimRes_bothX3, ", 40.0"),
@@ -320,7 +288,7 @@ write_config_file <- function(
     )
   }
   if (!is.na(phen_VegAndRepPhoMod_bothX1)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativePhotoperiodModifier.XYPairs.X and [Phenology].ReproductivePhotoperiodModifier.XYPairs.X")
+    if (VERBOSE) print("Updating [Phenology].VegetativePhotoperiodModifier.XYPairs.X and [Phenology].ReproductivePhotoperiodModifier.XYPairs.X")
     content <- c(
       content,
       paste0("[Phenology].VegetativePhotoperiodModifier.XYPairs.X = ", phen_VegAndRepPhoMod_bothX1, ", 21.19"),
@@ -328,175 +296,175 @@ write_config_file <- function(
     )
   }
   if (!is.na(phen_VegTherTimeResp_X3)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativeThermalTime.Response.X")
+    if (VERBOSE) print("Updating [Phenology].VegetativeThermalTime.Response.X")
     content <- c(
       content,
       paste0("[Phenology].VegetativeThermalTime.Response.X = 10, 20, ", phen_VegTherTimeResp_X3, ", 40")
     )
   }
   if (!is.na(phen_RepTherTimeResp_X3)) {
-    if (VERBOSE) print("alterando [Phenology].ReproductiveThermalTime.Response.X")
+    if (VERBOSE) print("Updating [Phenology].ReproductiveThermalTime.Response.X")
     content <- c(
       content,
       paste0("[Phenology].ReproductiveThermalTime.Response.X = 10, 15, ", phen_RepTherTimeResp_X3, ", 40")
     )
   }
   if (!is.na(phen_VegPhoMod_X1)) {
-    if (VERBOSE) print("alterando [Phenology].VegetativePhotoperiodModifier.XYPairs.X")
+    if (VERBOSE) print("Updating [Phenology].VegetativePhotoperiodModifier.XYPairs.X")
     content <- c(
       content,
       paste0("[Phenology].VegetativePhotoperiodModifier.XYPairs.X = ", phen_VegPhoMod_X1, ", 21.19")
     )
   }
   if (!is.na(phen_RepPhoMod_X1)) {
-    if (VERBOSE) print("alterando [Phenology].ReproductivePhotoperiodModifier.XYPairs.X")
+    if (VERBOSE) print("Updating [Phenology].ReproductivePhotoperiodModifier.XYPairs.X")
     content <- c(
       content,
       paste0("[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = ", phen_RepPhoMod_X1, ", 21.19")
     )
   }
   if (!is.na(phen_VegetativeTarget)) {
-    if (VERBOSE) print("alterando [Phenology].Vegetative.Target.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].Vegetative.Target.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].Vegetative.Target.FixedValue = ", phen_VegetativeTarget)
     )
   }
   if (!is.na(phen_EarlyFloweringTarget)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyFlowering.Target.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].EarlyFlowering.Target.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].EarlyFlowering.Target.FixedValue = ", phen_EarlyFloweringTarget)
     )
   }
   if (!is.na(phen_EarlyPodDevTarget)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyPodDevelopment.Target.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].EarlyPodDevelopment.Target.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].EarlyPodDevelopment.Target.FixedValue = ", phen_EarlyPodDevTarget)
     )
   }
   if (!is.na(phen_FractGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = ", phen_FractGrainFill)
     )
   }
   if (!is.na(phen_EntGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = ", phen_EntGrainFill)
     )
   }
   if (!is.na(phen_MidGrainFill)) {
-    if (VERBOSE) print("alterando [Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].MidGrainFilling.Target.FractionofMidToLateGrainfilling.FixedValue = ", phen_MidGrainFill)
     )
   }
   if (!is.na(phen_Maturing)) {
-    if (VERBOSE) print("alterando [Phenology].Maturing.Target.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].Maturing.Target.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].Maturing.Target.FixedValue = ", phen_Maturing)
     )
   }
   if (!is.na(phen_Ripening)) {
-    if (VERBOSE) print("alterando [Phenology].Ripening.Target.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].Ripening.Target.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].Ripening.Target.FixedValue = ", phen_Ripening)
     )
   }
   if (!is.na(phen_shootlag)) {
-    if (VERBOSE) print("alterando [Phenology].Emerging.Target.ShootLag.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].Emerging.Target.ShootLag.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].Emerging.Target.ShootLag.FixedValue = ", phen_shootlag)
     )
   }
   if (!is.na(phen_shootrate)) {
-    if (VERBOSE) print("alterando [Phenology].Emerging.Target.DepthxRate.ShootRate.FixedValue")
+    if (VERBOSE) print("Updating [Phenology].Emerging.Target.DepthxRate.ShootRate.FixedValue")
     content <- c(
       content,
       paste0("[Phenology].Emerging.Target.DepthxRate.ShootRate.FixedValue = ", phen_shootrate)
     )
   }
   if (!is.na(leaf_RUE)) {
-    if (VERBOSE) print("alterando [Leaf].Photosynthesis.RUE.FixedValue")
+    if (VERBOSE) print("Updating [Leaf].Photosynthesis.RUE.FixedValue")
     content <- c(
       content,
       paste0("[Leaf].Photosynthesis.RUE.FixedValue = ", leaf_RUE)
     )
   }
   if (!is.na(leaf_AreaLargLeaf)) {
-    if (VERBOSE) print("alterando [Leaf].AreaLargestLeaf.FixedValue")
+    if (VERBOSE) print("Updating [Leaf].AreaLargestLeaf.FixedValue")
     content <- c(
       content,
       paste0("[Leaf].AreaLargestLeaf.FixedValue = ", leaf_AreaLargLeaf)
     )
   }
   if (!is.na(leaf_Phyllochron)) {
-    if (VERBOSE) print("alterando [Leaf].Phyllochron.FixedValue")
+    if (VERBOSE) print("Updating [Leaf].Phyllochron.FixedValue")
     content <- c(
       content,
       paste0("[Leaf].Phyllochron.FixedValue = ", leaf_Phyllochron)
     )
   }
   if (!is.na(leaf_ExtinctionCoef_Y1)) {
-    if (VERBOSE) print("alterando [Leaf].ExtinctionCoefficient.XYPairs.Y")
+    if (VERBOSE) print("Updating [Leaf].ExtinctionCoefficient.XYPairs.Y")
     content <- c(
       content,
       paste0("[Leaf].ExtinctionCoefficient.XYPairs.Y = ", leaf_ExtinctionCoef_Y1, ", 0.4")
     )
   }
   if (!is.na(grain_HarvIndex)) {
-    if (VERBOSE) print("alterando [Grain].PotentialHarvestIndex.FixedValue")
+    if (VERBOSE) print("Updating [Grain].PotentialHarvestIndex.FixedValue")
     content <- c(
       content,
       paste0("[Grain].PotentialHarvestIndex.FixedValue = ", grain_HarvIndex)
     )
   }
   if (!is.na(root_EarlyFrontVel)) {
-    if (VERBOSE) print("alterando [Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function.FixedValue")
+    if (VERBOSE) print("Updating [Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function.FixedValue")
     content <- c(
       content,
       paste0("[Root].RootFrontVelocity.PotentialRootFrontVelocity.early.Function.FixedValue = ", root_EarlyFrontVel)
     )
   }
   if (!is.na(root_LateFrontVel)) {
-    if (VERBOSE) print("alterando [Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function.FixedValue")
+    if (VERBOSE) print("Updating [Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function.FixedValue")
     content <- c(
       content,
       paste0("[Root].RootFrontVelocity.PotentialRootFrontVelocity.late.Function.FixedValue = ", root_LateFrontVel)
     )
   }
   if (!is.na(nodule_VegGrowthRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate.FixedValue")
+    if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate.FixedValue")
     content <- c(
       content,
       paste0("[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.VegetativeGrowth.Rate.FixedValue = ", nodule_VegGrowthRate)
     )
   }
   if (!is.na(nodule_RepGrowthRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate.FixedValue")
+    if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate.FixedValue")
     content <- c(
       content,
       paste0("[Nodule].FixationRate.DailyPotentialFixationRate.PotentialFixationRate.SpecificFixationRate.ReproductiveGrowth.Rate.FixedValue = ", nodule_RepGrowthRate)
     )
   }
   if (!is.na(nodule_MaxFixRate)) {
-    if (VERBOSE) print("alterando [Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate.FixedValue")
+    if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate.FixedValue")
     content <- c(
       content,
       paste0("[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate.FixedValue = ", nodule_MaxFixRate)
     )
   }
   if (!is.na(soil_KL)) {
-    if (VERBOSE) print("alterando [Soil].Physical.SoybeanSoil.KL")
+    if (VERBOSE) print("Updating [Soil].Physical.SoybeanSoil.KL")
     if (is.na(soil_size)){
       stop("Error: Please specify soil_size")
     } else if (soil_size == 6){
