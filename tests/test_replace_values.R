@@ -10,6 +10,17 @@ file.copy(original_path, test_path, overwrite = TRUE) || stop("Falha ao copiar o
 
 on.exit({ if (file.exists(test_path)) file.remove(test_path) })
 
+test_that("invalid parameter", {
+  expect_error(
+    replace_values(
+      apsimx_path = test_path,
+      list_params_values = list(
+        "this_doesnt_exist" = 999
+      )
+    )
+  )
+})
+
 test_that("phen_VegAndRepTherTimRes_bothX3 was modified", {
   new_value <- 40
   replace_values(
@@ -324,48 +335,3 @@ test_that("nodule_MaxFixRate was modified", {
   read_value <- rapsimng::search_path(rapsimng::read_apsimx(test_path), path = "[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate")$node$FixedValue
   expect_equal(read_value, new_value)
 })
-
-# test_that("all replace_values parameters were tested", {
-#   tested_params <- c(
-#     "apsimx_path",
-#     "VERBOSE",
-#     "phen_VegAndRepTherTimRes_bothX3",
-#     "phen_VegAndRepPhoMod_bothX1",
-#     "phen_VegTherTimeResp_X3",
-#     "phen_RepTherTimeResp_X3",
-#     "phen_VegPhoMod_X1",
-#     "phen_RepPhoMod_X1",
-#     "phen_VegetativeTarget",
-#     "phen_EarlyFloweringTarget",
-#     "phen_EarlyPodDevTarget",
-#     "phen_FractGrainFill",
-#     "phen_EntGrainFill",
-#     "phen_MidGrainFill",
-#     "phen_Maturing",
-#     "phen_Ripening",
-#     "phen_shootlag",
-#     "phen_shootrate",
-#     "leaf_RUE",
-#     "leaf_AreaLargLeaf",
-#     "leaf_Phyllochron",
-#     "leaf_ExtinctionCoef_Y1",
-#     "grain_HarvIndex",
-#     "root_EarlyFrontVel",
-#     "root_LateFrontVel",
-#     "nodule_VegGrowthRate",
-#     "nodule_RepGrowthRate",
-#     "nodule_MaxFixRate"
-#   )
-
-#   all_params <- names(formals(replace_values))
-
-#   missing_params <- setdiff(all_params, c("apsimx_path", "VERBOSE", tested_params))
-
-#   if (length(missing_params) > 0) {
-#     message("Os seguintes parâmetros não foram testados: ", paste(missing_params, collapse = ", "))
-#   } else {
-#     message("Todos os parâmetros foram testados!")
-#   }
-
-#   expect_equal(length(missing_params), 0, info = paste0("Os seguintes parâmetros não foram testados: ", paste(missing_params, collapse = ", ")))
-# })

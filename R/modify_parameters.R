@@ -187,6 +187,9 @@ replace_values <- function(
           if (VERBOSE) print("Updating [Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate")
           # 0.6
           new_model <<- replace_FixedValue(new_model, "[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate", value)
+        },
+        {
+          custom_stop(paste0(key, " not available on replace_values function!"))
         }
       )
     }
