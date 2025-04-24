@@ -1,10 +1,10 @@
-source("../R/modify_parameters.R")
+source(file.path("..", "R", "modify_parameters.R"))
 
 library(testthat)
 library(rapsimng)
 
-original_path <- "/home/luanabeckerdaluz/git/luanabeckerdaluz/apsimtestes/base_simulations/Soy-BR-fields-MG6.apsimx"
-test_path <- "test.apsimx"
+original_path <- "test_simulation.apsimx"
+test_path <- file.path(tempdir(), "test.apsimx")
 
 file.copy(original_path, test_path, overwrite = TRUE) || stop("Falha ao copiar o arquivo APSIMX.")
 

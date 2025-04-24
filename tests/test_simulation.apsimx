@@ -291,7 +291,7 @@
                       "$type": "Models.Functions.XYPairs, Models",
                       "X": [
                         12.58,
-                        15.8
+                        21.19
                       ],
                       "Y": [
                         1.0,
@@ -384,7 +384,7 @@
                       "$type": "Models.Functions.XYPairs, Models",
                       "X": [
                         12.58,
-                        15.8
+                        21.19
                       ],
                       "Y": [
                         1.0,
@@ -635,7 +635,7 @@
                   "Children": [
                     {
                       "$type": "Models.Functions.Constant, Models",
-                      "FixedValue": 404.0,
+                      "FixedValue": 200.0,
                       "Units": null,
                       "Name": "Target",
                       "ResourceName": null,
@@ -675,7 +675,7 @@
                     },
                     {
                       "$type": "Models.Functions.Constant, Models",
-                      "FixedValue": 180.0,
+                      "FixedValue": 200.0,
                       "Units": null,
                       "Name": "Target",
                       "ResourceName": null,
@@ -751,7 +751,7 @@
                       "Children": [
                         {
                           "$type": "Models.Functions.Constant, Models",
-                          "FixedValue": 0.056,
+                          "FixedValue": 0.05,
                           "Units": null,
                           "Name": "FractionofGrainfilling",
                           "ResourceName": null,
@@ -877,7 +877,7 @@
                       "Children": [
                         {
                           "$type": "Models.Functions.Constant, Models",
-                          "FixedValue": 712.0,
+                          "FixedValue": 500.0,
                           "Units": null,
                           "Name": "EntireGrainfillPeriod",
                           "ResourceName": null,
