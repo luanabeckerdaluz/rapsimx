@@ -1,4 +1,4 @@
-print_stats_of_folder <- function(folder_path){
+print_stats_of_folder <- function(folder_path) {
   custom_summary("Summary:")
   custom_summary(paste0("  Folder = ", folder_path))
 
@@ -9,7 +9,7 @@ print_stats_of_folder <- function(folder_path){
   custom_summary(paste("  Number of apsimxs:", length(apsimx_filepaths)))
 }
 
-lapply_parallel_progressbar <- function(X_must_be_num_array, FUN, parallel = FALSE) {
+lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, parallel = FALSE) {
   if (parallel) {
     custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
   } else {
@@ -19,12 +19,12 @@ lapply_parallel_progressbar <- function(X_must_be_num_array, FUN, parallel = FAL
   # Create progress bar
   pb_generate <- NULL
   if (!parallel) {
-    pb_generate <- txtProgressBar(min = 0, max = length(X_must_be_num_array), style = 3)
+    pb_generate <- txtProgressBar(min = 0, max = length(x_must_be_num_array), style = 3)
   }
 
   # Run lapply
   lapply_arguments <- list(
-    X = X_must_be_num_array,
+    X = x_must_be_num_array,
     FUN = function(i) {
       res <- FUN(i)
       if (!parallel) setTxtProgressBar(pb_generate, i)
@@ -32,7 +32,7 @@ lapply_parallel_progressbar <- function(X_must_be_num_array, FUN, parallel = FAL
     }
   )
 
-   # Configure parallel or sequential
+  # Configure parallel or sequential
   if (parallel) {
     cl <- parallel::makeCluster(CONFIG_MULTICORES)
     future::plan(future::cluster, workers = cl)

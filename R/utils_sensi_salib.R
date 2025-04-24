@@ -28,8 +28,7 @@ salib_for_one_field_and_param <- function(
   problem,
   salib_sobol,
   fix_NAs_with_mean = FALSE,
-  dry_run = FALSE
-  ) {
+  dry_run = FALSE) {
 
   if (dry_run) {
     custom_cat(paste0("Computing SALib for field '", field, "' and param '", param, "'"))
@@ -89,8 +88,7 @@ compute_salib_for_all_params_and_fields <- function(
   fix_NAs_with_mean = FALSE,
   dry_run = FALSE,
   parallel = TRUE,
-  overwrite = FALSE
-  ) {
+  overwrite = FALSE) {
 
   # Check if salib.csv already exists
   salib_csv_filepath <- file.path(sensi_tmp_folder, "salib.csv")

@@ -13,8 +13,7 @@ list_db_tables <- function(db_filepath) {
 
 read_db_table <- function(
   db_filepath,
-  table
-  ) {
+  table) {
 
   # Connects to db
   conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
@@ -36,8 +35,7 @@ read_db_table <- function(
 
 summarize_sim_db <- function(
   db_filepath,
-  number_of_fields_to_check = NA
-  ) {
+  number_of_fields_to_check = NA) {
 
   # Handle input errors
   if (!file.exists(db_filepath)) {
@@ -107,8 +105,7 @@ summarize_harvest_dbs <- function(
   runs_only_some_n = NA,
   parallel = TRUE,
   overwrite = FALSE,
-  dry_run = FALSE
-  ) {
+  dry_run = FALSE) {
 
   # Check if parameters are integer
   if (!is.na(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
@@ -173,7 +170,7 @@ summarize_harvest_dbs <- function(
   }
 
   res <- lapply_parallel_progressbar(
-    X_must_be_num_array = seq_along(files_list),
+    x_must_be_num_array = seq_along(files_list),
     FUN = function(i) {
       summarize_sim_db(
         db_filepath = files_list[i],

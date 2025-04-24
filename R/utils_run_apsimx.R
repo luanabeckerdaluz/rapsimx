@@ -4,8 +4,7 @@ just_run_apsimx <- function(
   simulations_names = NA,
   from_config_file = NA,
   xlsx_or_met_folder = NA,
-  dry_run = FALSE
-) {
+  dry_run = FALSE) {
 
   # Check inputs
   if (!file.exists(apsimx_filepath)){
@@ -80,8 +79,7 @@ run_apsimxs <- function(
   simulations_names = NA,
   ids_to_run = NA,
   parallel = TRUE,
-  dry_run = FALSE
-  ) {
+  dry_run = FALSE) {
 
   # Check if simulation folder exists on sensi folder
   sims_folder <- file.path(sensi_folder, "sims_and_met")
@@ -108,7 +106,7 @@ run_apsimxs <- function(
     custom_cat_nobreaks("0 simulations to run. Returning...")
     return(NULL)
   }
-  
+
   # If necessary, filter df to run just N sims
   if (!is.na(runs_only_some_n)) {
     if (!is.integer(runs_only_some_n)) {
@@ -125,7 +123,7 @@ run_apsimxs <- function(
   custom_cat_nobreaks(paste0("Running ", length(apsimx_filepaths), " apsimx simulations..."))
 
   res <- lapply_parallel_progressbar(
-    X_must_be_num_array = seq_along(apsimx_filepaths),
+    x_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
       just_run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],

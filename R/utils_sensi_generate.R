@@ -3,8 +3,7 @@ generate_apsimx <- function(
   id,
   folder,
   sensit_base_sim_filepath,
-  dry_run = FALSE
-  ) {
+  dry_run = FALSE) {
 
   # Check if base sim exists
   if (!file.exists(sensit_base_sim_filepath)) {
@@ -42,8 +41,7 @@ generate_apsimxs <- function(
   sensit_base_sim_filepath,
   runs_only_some_n = NA,
   parallel = TRUE,
-  dry_run = FALSE
-  ) {
+  dry_run = FALSE) {
 
   # Stop if base sim does not exist
   if (!file.exists(sensit_base_sim_filepath)){
@@ -90,7 +88,7 @@ generate_apsimxs <- function(
   custom_cat_nobreaks(paste0("Generating ", nrow(samples_df), " samples..."))
 
   res <- lapply_parallel_progressbar(
-    X_must_be_num_array = seq_len(nrow(samples_df)),
+    x_must_be_num_array = seq_len(nrow(samples_df)),
     FUN = function(i) {
       list_params_values <- samples_df[i, , drop = TRUE]
       generate_apsimx(

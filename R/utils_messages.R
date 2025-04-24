@@ -16,7 +16,7 @@ custom_warning <- function(text) {
 }
 
 custom_stop <- function(text) {
-  CHARS_TO_BREAK <- 80
+  CHARS_TO_BREAK <<- 80
   cat(paste(strwrap(paste("🛑 STOP:", text), width = CHARS_TO_BREAK), collapse = "\n"))
   stop()
 }

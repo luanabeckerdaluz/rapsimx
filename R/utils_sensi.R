@@ -48,8 +48,7 @@ load_problem_from_current_folder <- function() {
 
 load_samples <- function(
   save_csv_to_folder,
-  plot
-  ) {
+  plot = FALSE) {
 
   samples_csv_filepath <- file.path(save_csv_to_folder, "samples.csv")
   if (!file.exists(samples_csv_filepath)) {
@@ -72,8 +71,7 @@ generate_samples_csv <- function(
   method = NA,
   N_SAMPLES = NA,
   overwrite = FALSE,
-  save_csv_to_folder
-  ) {
+  save_csv_to_folder) {
 
   # Skip generating samples if "samples.csv" already exists on sensi folder
   samples_csv_filepath <- file.path(save_csv_to_folder, "samples.csv")

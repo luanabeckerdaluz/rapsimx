@@ -1,17 +1,19 @@
+CONFIG_MODELS_COMMAND <<- NULL
+CONFIG_MULTICORES <<- NULL
+
 init <- function(
   multicores = parallel::detectCores() - 2,
-  models_command = NA
-  ) {
+  models_command = NA) {
 
   # Source modules
-  source(file.path("../R", "modify_parameters.R"))
-  source(file.path("../R", "utils_messages.R"))
-  source(file.path("../R", "utils_run_apsimx.R"))
-  source(file.path("../R", "utils_sensi_salib.R"))
-  source(file.path("../R", "utils_sensi_generate.R"))
-  source(file.path("../R", "utils_sensi_summarize.R"))
-  source(file.path("../R", "utils_sensi.R"))
-  source(file.path("../R", "utils.R"))
+  source(file.path("../", "R", "modify_parameters.R"))
+  source(file.path("../", "R", "utils_messages.R"))
+  source(file.path("../", "R", "utils_run_apsimx.R"))
+  source(file.path("../", "R", "utils_sensi_salib.R"))
+  source(file.path("../", "R", "utils_sensi_generate.R"))
+  source(file.path("../", "R", "utils_sensi_summarize.R"))
+  source(file.path("../", "R", "utils_sensi.R"))
+  source(file.path("../", "R", "utils.R"))
 
   # Config multicores
   if (multicores >= parallel::detectCores()) {
@@ -32,9 +34,6 @@ init <- function(
   }
 
   # Show summary
-  # custom_cat_nobreaks(paste0("Base folder = ", CONST_BASE_FOLDER))
-  # custom_cat_nobreaks(paste0("Met folder = ", CONST_MET_FOLDER))
-  # custom_cat_nobreaks(paste0("Base simulations folder = ", CONST_BASE_SIMULATIONS_FOLDER))
   custom_cat_nobreaks(paste0("ApsimX Models folder = ", CONFIG_MODELS_COMMAND))
   custom_cat_nobreaks(paste0("Multicores = ", CONFIG_MULTICORES))
 }
