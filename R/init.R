@@ -6,8 +6,6 @@ init <- function(
   models_command = NA) {
 
   # Source modules
-  source(file.path("../", "R", "modify_parameters.R"))
-  source(file.path("../", "R", "utils_run_apsimx.R"))
   source(file.path("../", "R", "utils_sensi_salib.R"))
   source(file.path("../", "R", "utils_sensi_generate.R"))
   source(file.path("../", "R", "utils_sensi_summarize.R"))
