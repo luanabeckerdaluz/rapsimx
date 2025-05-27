@@ -11,11 +11,11 @@ generate_apsimx <- function(
   }
 
   # Copy base simulation to tmp folder
-  filepath_sim <- file.path(folder, paste0("simulation", id, ".apsimx"))
+  filepath_sim <- file.path(folder, glue::glue("simulation{id}.apsimx"))
 
   # If dry_run, print and return
   if (dry_run) {
-    custom_cat_nobreaks(paste0("It will generate file ", filepath_sim))
+    cli::cli_alert_success("It will generate file {filepath_sim}")
     return(NULL)
   }
 
@@ -45,47 +45,53 @@ generate_apsimxs <- function(
 
   # Stop if base sim does not exist
   if (!file.exists(sensit_base_sim_filepath)){
-    custom_stop(paste0("Base simulation ", sensit_base_sim_filepath, " does not exist!"))
+    cli::cli_alert_danger("Base simulation {sensit_base_sim_filepath} does not exist!")
+    stop()
   }
 
   # Check if sensi_folder exist
   if (!file.exists(sensi_folder)){
-    custom_stop(paste0("Sensi folder ", sensi_folder, " does not exist!"))
+    cli::cli_alert_danger("Sensi folder {sensi_folder} does not exist!")
+    stop()
   }
 
   # Load samples.csv
   samples_csv_filepath <- file.path(sensi_folder, "samples.csv")
   if (!file.exists(samples_csv_filepath)) {
-    custom_stop(paste0("File 'samples.csv' does not exist on ", sensi_folder, " folder! Aborting loading..."))
+    cli::cli_alert_danger("File 'samples.csv' does not exist on {sensi_folder} folder! Aborting loading...")
+    stop()
   } else {
-    custom_cat(paste0("Loading 'samples.csv' from folder ", sensi_folder))
+    cli::cli_alert_success("Loading 'samples.csv' from folder {sensi_folder}")
     samples_df <- read.csv(samples_csv_filepath)
   }
 
   sims_folder <- file.path(sensi_folder, "sims_and_met")
   # Stop if simulations folder does not exist on sensi folder
   if (!file.exists(sims_folder)) {
-    custom_stop("sensi folder ", sims_folder, " does not exist!")
+    cli::cli_alert_danger("sensi folder {sims_folder} does not exist!")
+    stop()
   }
 
   if (nrow(samples_df) == 0) {
-    custom_cat_nobreaks("Samples df has 0 rows. Returning...")
+    cli::cli_alert_success("Samples df has 0 rows. Returning...")
     return(NULL)
   }
   # If necessary, filter df to run just N sims
   if (!is.na(runs_only_some_n)) {
     if (!is.integer(runs_only_some_n)) {
-      custom_stop("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      cli::cli_alert_danger("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      stop()
     }
     if (runs_only_some_n > nrow(samples_df)) {
-      custom_stop(paste0("runs_only_some_n parameter [", runs_only_some_n, "] must be lower or equal than nrow of samples [", nrow(samples_df), "]"))
+      cli::cli_alert_danger("runs_only_some_n parameter [{runs_only_some_n}] must be lower or equal than nrow of samples [{nrow(samples_df)}]")
+      stop()
     }
     if (nrow(samples_df) > runs_only_some_n) {
       samples_df <- samples_df[1:runs_only_some_n, ]
     }
   }
 
-  custom_cat_nobreaks(paste0("Generating ", nrow(samples_df), " samples..."))
+  cli::cli_alert_success("Generating {nrow(samples_df)} samples...")
 
   res <- lapply_parallel_progressbar(
     x_must_be_num_array = seq_len(nrow(samples_df)),

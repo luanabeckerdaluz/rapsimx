@@ -31,12 +31,13 @@ salib_for_one_field_and_param <- function(
   dry_run = FALSE) {
 
   if (dry_run) {
-    custom_cat(paste0("Computing SALib for field '", field, "' and param '", param, "'"))
+    cli::cli_alert_success("Computing SALib for field '{field}' and param '{param}'")
     return(data.frame())
   }
 
   if (!is.integer(number_of_simulations)) {
-    custom_stop("'number_of_simulations' must be an integer (e.g. '100L')")
+    cli::cli_alert_danger("'number_of_simulations' must be an integer (e.g. '100L')")
+    stop()
   }
 
   arr <- df %>%
@@ -44,10 +45,11 @@ salib_for_one_field_and_param <- function(
     pull(!!param)
 
   if (number_of_simulations < length(arr)) {
-    custom_stop(paste0("field=", field, " param=", param, " -> number_of_simulations [", number_of_simulations, "] is less than summarized array length for this field [", length(arr), "]"))
+    cli::cli_alert_danger("field={field} param={param} -> number_of_simulations [{number_of_simulations}] is less than summarized array length for this field [{length(arr)}]")
+    stop()
   } else if (number_of_simulations > length(arr)) {
     number_of_NAs_to_fill <- number_of_simulations - length(arr)
-    custom_warning(paste0("field=", field, " param=", param, " -> number_of_simulations [", number_of_simulations, "] is greater than array length [", length(arr), "]. Filling with ", number_of_NAs_to_fill, " NAs..."))
+    cli::cli_alert_warning("field={field} param={param} -> number_of_simulations [{number_of_simulations}] is greater than array length [{length(arr)}]. Filling with {number_of_NAs_to_fill} NAs...")
     arr <- c(arr, rep(NA, number_of_NAs_to_fill))
   }
 
@@ -94,33 +96,34 @@ compute_salib_for_all_params_and_fields <- function(
   salib_csv_filepath <- file.path(sensi_tmp_folder, "salib.csv")
   if (file.exists(salib_csv_filepath)) {
     if (overwrite) {
-      custom_warning(paste0("'salib.csv' file already exists on ", sensi_tmp_folder, " folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!"))
+      cli::cli_alert_warning("'salib.csv' file already exists on {sensi_tmp_folder} folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!")
     } else {
-      custom_stop(paste0("'salib.csv' file already exists on ", sensi_tmp_folder, " folder! Please, if you want to create a new salib csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!"))
+      cli::cli_alert_danger("'salib.csv' file already exists on {sensi_tmp_folder} folder! Please, if you want to create a new salib csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
+      stop()
     }
   } else {
-    custom_cat("'salib.csv' file doesn't exist. Generating...")
+    cli::cli_alert_success("'salib.csv' file doesn't exist. Generating...")
     overwrite <- FALSE
   }
 
   # Print parallel status
   if (parallel) {
-    custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
+    cli::cli_alert_success("Running in parallel with {CONFIG_MULTICORES} cores")
   } else {
-    custom_cat("Not using parallel")
+    cli::cli_alert_success("Not using parallel")
   }
 
   # Get number of simulations (samples nrow)
-  custom_cat(paste0("Loading 'samples.csv' from ", file.path(sensi_tmp_folder, "samples.csv")))
+  cli::cli_alert_success("Loading 'samples.csv' from {file.path(sensi_tmp_folder, 'samples.csv')}")
   df_samples <- read.csv(file.path(sensi_tmp_folder, "samples.csv"))
   number_of_simulations <- nrow(df_samples)
 
   # Read summarized csv
-  custom_cat(paste0("Loading 'summarized.csv' from ", file.path(sensi_tmp_folder, "summarized.csv")))
+  cli::cli_alert_success("Loading 'summarized.csv' from {file.path(sensi_tmp_folder, 'summarized.csv')}")
   df <- read.csv(file.path(sensi_tmp_folder, "summarized.csv"))
   # print(head(df))
 
-  custom_cat(paste0("Loading 'problem.R' from ", file.path(sensi_tmp_folder, "problem.R")))
+  cli::cli_alert_success("Loading 'problem.R' from {file.path(sensi_tmp_folder, 'problem.R')}")
   source(file.path(sensi_tmp_folder, "problem.R"))
   # print(problem)
 
@@ -180,9 +183,9 @@ compute_salib_for_all_params_and_fields <- function(
   # Save csv
   write.csv(rbind_salibs, salib_csv_filepath, row.names = FALSE)
   if (overwrite) {
-    custom_cat(paste0("File 'salib.csv' was overwriten!"))
+    cli::cli_alert_success("File 'salib.csv' was overwriten!")
   } else {
-    custom_cat(paste0("File 'salib.csv' was created!"))
+    cli::cli_alert_success("File 'salib.csv' was created!")
   }
 
   return(rbind_salibs)

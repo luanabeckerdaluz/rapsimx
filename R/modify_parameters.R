@@ -53,7 +53,6 @@ replace_values <- function(
     X = names(list_params_values),
     FUN = function(key) {
       value <- list_params_values[[key]]
-      # print(paste("Chave:", key, "Valor:", value))
       switch(
         key,
         "phen_VegAndRepTherTimRes_bothX3" = {
@@ -189,7 +188,8 @@ replace_values <- function(
           new_model <<- replace_FixedValue(new_model, "[Nodule].FixationRate.DailyPotentialFixationRate.MaximumFixationRate", value)
         },
         {
-          custom_stop(paste0(key, " not available on replace_values function!"))
+          cli::cli_alert_danger("{key} not available on replace_values function!")
+          stop()
         }
       )
     }

@@ -24,10 +24,10 @@ read_db_table <- function(
     hr <- RSQLite::dbReadTable(conn, table)
     return(hr)
   }, warning = function(w) {
-    print(paste0("WARNING: when reading db file ", basename(db_filepath), ": ", w$message))
+    cli::cli_alert_warning("WARNING: when reading db file {basename(db_filepath)}: {w$message}")
     return(NULL)
   }, error = function(e) {
-    print(paste0("ERROR when reading db file ", basename(db_filepath), ": ", e$message))
+    cli::cli_alert_danger("ERROR when reading db file {basename(db_filepath)}: {e$message}")
     return(NULL)
   })
   return(df)
@@ -43,7 +43,8 @@ summarize_sim_db <- function(
   }
 
   if (!is.na(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
-    custom_stop("'number_of_fields_to_check' must be an integer (e.g. '32L')")
+    cli::cli_alert_danger("'number_of_fields_to_check' must be an integer (e.g. '32L')")
+    stop()
   }
 
   # list_db_tables(db_filepath)
@@ -92,7 +93,7 @@ summarize_sim_db <- function(
   }
 
   if (!is.na(number_of_fields_to_check) && sim_id && nrow(summarized_df) != number_of_fields_to_check) {
-    custom_warning(paste0("Report id ", sim_id, " is missing fields! (", nrow(summarized_df), " / ", number_of_fields_to_check, ")"))
+    cli::cli_alert_warning("Report id {sim_id} is missing fields! ({nrow(summarized_df)} / {number_of_fields_to_check})")
   }
 
   return(summarized_df)
@@ -109,22 +110,25 @@ summarize_harvest_dbs <- function(
 
   # Check if parameters are integer
   if (!is.na(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
-    custom_stop("'number_of_fields_to_check' must be an integer (e.g. '32L')")
+    cli::cli_alert_danger("'number_of_fields_to_check' must be an integer (e.g. '32L')")
+    stop()
   }
   if (!is.na(runs_only_some_n) && !is.integer(runs_only_some_n)) {
-    custom_stop("'runs_only_some_n' must be an integer (e.g. '5L')")
+    cli::cli_alert_danger("'runs_only_some_n' must be an integer (e.g. '5L')")
+    stop()
   }
 
   # Skip summarize if "summarized.csv" already exists on folder
   summarized_csv_filepath <- file.path(sensi_folder, "summarized.csv")
   if (file.exists(summarized_csv_filepath)) {
     if (overwrite) {
-      custom_warning(paste0("'summarized.csv' file already exists on ", sensi_folder, " folder! Summarize process will run because overwrite parameter was set to TRUE."))
+      cli::cli_alert_warning("'summarized.csv' file already exists on {sensi_folder} folder! Summarize process will run because overwrite parameter was set to TRUE.")
     } else {
-      custom_stop(paste0("'summarized.csv' file already exists on ", sensi_folder, " folder! Please, if you want to create new summarized csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!"))
+      cli::cli_alert_danger("'summarized.csv' file already exists on {sensi_folder} folder! Please, if you want to create new summarized csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
+      stop()
     }
   } else {
-    custom_cat("'summarized.csv' file doesn't exist. Generating...")
+    cli::cli_alert_success("'summarized.csv' file doesn't exist. Generating...")
     overwrite <- FALSE
   }
 
@@ -151,10 +155,11 @@ summarize_harvest_dbs <- function(
   # If necessary, summarize just N sims
   if (!is.na(runs_only_some_n)) {
     if (!is.integer(runs_only_some_n)) {
-      custom_stop("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      cli::cli_alert_danger("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      stop()
     }
     if (runs_only_some_n > length(files_list)) {
-      custom_warning(paste0("WARNING: runs_only_some_n parameter [", runs_only_some_n, "] must be lower or equal than db files count [", length(files_list), "]. Updating its value to ", length(files_list)))
+      cli::cli_alert_warning("WARNING: runs_only_some_n parameter [{runs_only_some_n}] must be lower or equal than db files count [{length(files_list)}]. Updating its value to {length(files_list)}")
       runs_only_some_n <- length(files_list)
     }
     if (length(files_list) > runs_only_some_n) {
@@ -164,7 +169,7 @@ summarize_harvest_dbs <- function(
 
   if (dry_run) {
     for (file in files_list) {
-      custom_cat_nobreaks(paste0("It will read file ", file))
+      cli::cli_alert_success("It will read file {file}")
     }
     return(NULL)
   }
@@ -186,9 +191,9 @@ summarize_harvest_dbs <- function(
   # Save csv
   write.csv(df_all_summarized, summarized_csv_filepath, row.names = FALSE)
   if (overwrite) {
-    custom_cat(paste0("File 'summarized.csv' was overwriten!"))
+    cli::cli_alert_success("File 'summarized.csv' was overwriten!")
   } else {
-    custom_cat(paste0("File 'summarized.csv' was created!"))
+    cli::cli_alert_success("File 'summarized.csv' was created!")
   }
 
   return(df_all_summarized)

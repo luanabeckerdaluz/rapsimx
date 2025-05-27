@@ -8,7 +8,8 @@ just_run_apsimx <- function(
 
   # Check inputs
   if (!file.exists(apsimx_filepath)){
-    stop(paste("ERROR! apsimx simulation", apsimx_filepath, "does not exist!"))
+    cli::cli_alert_danger("ERROR! apsimx simulation {apsimx_filepath} does not exist!")
+    stop()
   }
 
   # Copy all .xlsx or .met files to the same folder of simulation
@@ -19,22 +20,18 @@ just_run_apsimx <- function(
 
   command <- NA
   if(!is.na(from_config_file)) {
-    command <- paste0(CONFIG_MODELS_COMMAND, " --apply ", from_config_file)
+    command <- glue::glue("{CONFIG_MODELS_COMMAND} --apply {from_config_file}")
   }
   else {
-    command <- paste(CONFIG_MODELS_COMMAND, apsimx_filepath)
+    command <- glue::glue("{CONFIG_MODELS_COMMAND} {apsimx_filepath}")
   }
-  command <- paste0(
-    command,
-    " --single-threaded=FALSE",
-    " --cpu-count=", CONFIG_MULTICORES
-  )
+  command <- glue::glue("{command} --single-threaded=FALSE --cpu-count={CONFIG_MULTICORES}")
   # If setting field names, concat names
   if (is.character(simulations_names)) {
-    command <- paste0(command, " --simulation-names='", paste0(simulations_names, collapse = "|"), "'")
+    command <- glue::glue("{command} --simulation-names='{paste0(simulations_names, collapse = '|')}'")
   }
 
-  # command <- paste0(
+  # command <- (
   #     "docker run -i --rm --cpus='1.0' -v ",
   #     ":/ApsimX apsiminitiative/apsimng /ApsimX/",
   #     filename_sim,
@@ -42,7 +39,7 @@ just_run_apsimx <- function(
 
   # Fake running file
   if (dry_run) {
-    custom_cat_nobreaks(paste0("It will run command '", command, "'"))
+    cli::cli_alert_success("It will run command '{command}'")
     return(NULL)
   }
 
@@ -52,7 +49,7 @@ just_run_apsimx <- function(
       systemtime
     },
     warning = function(w) {
-      custom_warning(w$message)
+      cli::cli_alert_warning(w$message)
       return(NULL)
     },
     error = function(e) {
@@ -84,7 +81,8 @@ run_apsimxs <- function(
   # Check if simulation folder exists on sensi folder
   sims_folder <- file.path(sensi_folder, "sims_and_met")
   if (!file.exists(sims_folder)) {
-    custom_stop(paste0(basename(sims_folder), " folder does not exist on sensi folder ", sensi_folder, "!"))
+    cli::cli_alert_danger("{basename(sims_folder)} folder does not exist on sensi folder {sensi_folder}!")
+    stop()
   }
 
   # List files
@@ -97,30 +95,31 @@ run_apsimxs <- function(
   # If ids_to_run is defined, summarize just for these ids
   if (is.numeric(ids_to_run)) {
     apsimx_filepaths <- apsimx_filepaths[grepl(
-      paste(paste0("simulation", ids_to_run, ".apsimx"), collapse = "|"),
+      paste(glue::glue("simulation{ids_to_run}.apsimx"), collapse = "|"),
       apsimx_filepaths
     )]
   }
 
   if (length(apsimx_filepaths) == 0) {
-    custom_cat_nobreaks("0 simulations to run. Returning...")
+    cli::cli_alert_success("0 simulations to run. Returning...")
     return(NULL)
   }
 
   # If necessary, filter df to run just N sims
   if (!is.na(runs_only_some_n)) {
     if (!is.integer(runs_only_some_n)) {
-      custom_stop("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      cli::cli_alert_danger("'runs_only_some_n' must be an integer number (e.g. '5L')")
+      stop()
     }
     if (runs_only_some_n > length(apsimx_filepaths)) {
-      custom_warning(paste0("runs_only_some_n parameter [", runs_only_some_n, "] must be lower or equal than apsimx files count [", length(apsimx_filepaths), "]"))
+      cli::cli_alert_warning("runs_only_some_n parameter [{runs_only_some_n}] must be lower or equal than apsimx files count [{length(apsimx_filepaths)}]")
     }
     if (length(apsimx_filepaths) > runs_only_some_n) {
       apsimx_filepaths <- apsimx_filepaths[1:runs_only_some_n]
     }
   }
 
-  custom_cat_nobreaks(paste0("Running ", length(apsimx_filepaths), " apsimx simulations..."))
+  cli::cli_alert_success("Running {length(apsimx_filepaths)} apsimx simulations...")
 
   res <- lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(apsimx_filepaths),

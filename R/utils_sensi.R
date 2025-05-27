@@ -1,6 +1,6 @@
 generate_sensi_folder <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
   # normalize folderpath
-  folderpath <- normalizePath(folderpath)
+  folderpath <- normalizePath(folderpath, mustWork = FALSE)
 
   # If tmp folder doesn't exist, create and copy met data
   if (overwrite || !file.exists(folderpath)) {
@@ -20,10 +20,11 @@ generate_sensi_folder <- function(folderpath, copy_met_data_from, overwrite = FA
       overwrite = TRUE
     )
 
-    custom_cat(paste0("Folder ", folderpath, " was created!"))
+    cli::cli_alert_success("Folder {folderpath} was created!")
   }
   else {
-    custom_stop(paste0(folderpath, " folder already exists! Please choose a new folder name or set overwrite parameter to TRUE!"))
+    cli::cli_alert_danger("{folderpath} folder already exists! Please choose a new folder name or set overwrite parameter to TRUE!")
+    stop()
   }
 
   return(folderpath)
@@ -33,10 +34,11 @@ load_problem <- function(folder = NA) {
   # Try loading problem from folder
   problem_filepath <- file.path(folder, "problem.R")
   if (file.exists(problem_filepath)) {
-    custom_cat(paste0("'problem.R' file exists on ", folder, " folder! Loading..."))
+    cli::cli_alert_success("'problem.R' file exists on {folder} folder! Loading...")
     source(problem_filepath)
   } else {
-    custom_stop(paste0("'problem.R' file doesn't exist on ", folder, " folder! Please, specify a valid folder!"))
+    cli::cli_alert_danger("'problem.R' file doesn't exist on {folder} folder! Please, specify a valid folder!")
+    stop()
   }
   return(problem)
 }
@@ -52,9 +54,10 @@ load_samples <- function(
 
   samples_csv_filepath <- file.path(save_csv_to_folder, "samples.csv")
   if (!file.exists(samples_csv_filepath)) {
-    custom_stop(paste0("File ", samples_csv_filepath, " does not exist! Please, generate samples. Aborting loading..."))
+    cli::cli_alert_danger("File {samples_csv_filepath} does not exist! Please, generate samples. Aborting loading...")
+    stop()
   } else {
-    custom_cat(paste0("Loading samples from ", samples_csv_filepath))
+    cli::cli_alert_success("Loading samples from {samples_csv_filepath}")
     samples_df <- read.csv(samples_csv_filepath)
   }
 
@@ -77,22 +80,25 @@ generate_samples_csv <- function(
   samples_csv_filepath <- file.path(save_csv_to_folder, "samples.csv")
   if (file.exists(samples_csv_filepath)) {
     if (overwrite) {
-      custom_warning(paste0("'samples.csv' file already exists on ", save_csv_to_folder, " folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!"))
+      cli::cli_alert_warning("'samples.csv' file already exists on {save_csv_to_folder} folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!")
     } else {
-      custom_stop(paste0("'samples.csv' file already exists on ", save_csv_to_folder, " folder! Please, if you want to create new samples or overwrite, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!"))
+      cli::cli_alert_danger("'samples.csv' file already exists on {save_csv_to_folder} folder! Please, if you want to create new samples or overwrite, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
+      stop()
     }
   } else {
-    custom_cat("'samples.csv' file doesn't exist. Generating...")
+    cli::cli_alert_success("'samples.csv' file doesn't exist. Generating...")
     overwrite <- FALSE
   }
 
   # Check if required parameters are missing
   if (is.na(problem) || is.na(method) || is.na(N_SAMPLES)) {
-    custom_stop("ERROR: Parameters 'problem', 'method' and 'N_SAMPLES' should not be NA.")
+    cli::cli_alert_danger("ERROR: Parameters 'problem', 'method' and 'N_SAMPLES' should not be NA.")
+    stop()
   }
 
   if (!is.integer(N_SAMPLES)) {
-    custom_stop("'N_SAMPLES' must be an integer (e.g. '100L')")
+    cli::cli_alert_danger("'N_SAMPLES' must be an integer (e.g. '100L')")
+    stop()
   }
 
   # Set seed
@@ -138,18 +144,18 @@ generate_samples_csv <- function(
   # Save csv
   write.csv(samples_df, samples_csv_filepath, row.names = FALSE)
   if (overwrite) {
-    custom_cat(paste0("File 'samples.csv' was overwriten!"))
+    cli::cli_text(cli::col_green("✔ File 'samples.csv' was overwriten!"))
   } else {
-    custom_cat(paste0("File 'samples.csv' was created!"))
+    cli::cli_text(cli::col_green("✔ File 'samples.csv' was created!"))
   }
 
   # Copy problem to sensi folder
   saveRDS(problem, file.path(save_csv_to_folder, "problem.rds"))
   cat("problem <- ", deparse(problem), file = file.path(save_csv_to_folder, "problem.R"))
   if (overwrite) {
-    custom_cat("Files 'problem.R' and 'problem.rds' were overwriten!")
+    cli::cli_text(cli::col_green("✔ Files 'problem.R' and 'problem.rds' were overwriten!"))
   } else {
-    custom_cat("Files 'problem.R' and 'problem.rds' were created!")
+    cli::cli_text(cli::col_green("✔ Files 'problem.R' and 'problem.rds' were created!"))
   }
 }
 
@@ -164,22 +170,22 @@ plot_samples_distribution <- function(samples_df) {
 }
 
 sensi_folder_load <- function(sensi_folder = NA) {
-  custom_cat(paste0("Folder ", sensi_folder, " already exists. Checking..."))
+  cli::cli_text(cli::col_green("✔ Folder {sensi_folder} already exists. Checking..."))
   problem_filepath <- file.path(sensi_folder, "problem.R")
   if (file.exists(problem_filepath)) {
-    custom_cat("'problem.R' is available!")
+    cli::cli_text(cli::col_green("✔ 'problem.R' is available!"))
   }
   summarize_filepath <- file.path(sensi_folder, "summarized.csv")
   if (file.exists(summarize_filepath)) {
-    custom_cat("'summarized.csv' is available!")
+    cli::cli_text(cli::col_green("✔ 'summarized.csv' is available!"))
   }
   samples_csv_filepath <- file.path(sensi_folder, "samples.csv")
   if (file.exists(samples_csv_filepath)) {
-    custom_cat("'samples.csv' is available!")
+    cli::cli_text(cli::col_green("✔ 'samples.csv' is available!"))
   }
   salib_filepath <- file.path(sensi_folder, "salib.csv")
   if (file.exists(salib_filepath)) {
-    custom_cat("'salib.csv' is available!")
+    cli::cli_text(cli::col_green("✔ 'salib.csv' is available!"))
   }
   return(sensi_folder)
 }

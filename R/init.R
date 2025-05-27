@@ -7,7 +7,6 @@ init <- function(
 
   # Source modules
   source(file.path("../", "R", "modify_parameters.R"))
-  source(file.path("../", "R", "utils_messages.R"))
   source(file.path("../", "R", "utils_run_apsimx.R"))
   source(file.path("../", "R", "utils_sensi_salib.R"))
   source(file.path("../", "R", "utils_sensi_generate.R"))
@@ -17,7 +16,8 @@ init <- function(
 
   # Config multicores
   if (multicores >= parallel::detectCores()) {
-    custom_stop(paste("ERROR: Multicores parameter (", multicores, ") is greater or equal than detected multicores (", parallel::detectCores(), ")"))
+    cli::cli_alert_danger("ERROR: Multicores parameter ({multicores}) is greater or equal than detected multicores ({parallel::detectCores()})")
+    stop()
   }
   CONFIG_MULTICORES <<- multicores
 
@@ -34,6 +34,6 @@ init <- function(
   }
 
   # Show summary
-  custom_cat_nobreaks(paste0("ApsimX Models folder = ", CONFIG_MODELS_COMMAND))
-  custom_cat_nobreaks(paste0("Multicores = ", CONFIG_MULTICORES))
+  cli::cli_alert_success("ApsimX Models folder = {CONFIG_MODELS_COMMAND}")
+  cli::cli_alert_success("Multicores = {CONFIG_MULTICORES}")
 }

@@ -1,19 +1,19 @@
 print_stats_of_folder <- function(folder_path) {
-  custom_summary("Summary:")
-  custom_summary(paste0("  Folder = ", folder_path))
+  cli::cli_alert_info("Summary:")
+  cli::cli_alert_info("  Folder = {folder_path}")
 
   # Check number of dbs, csvs and apsimx files in folder
-  custom_summary(paste("  Number of csvs:", length(list.files(folder_path, pattern = "HarvestReport"))))
-  custom_summary(paste("  Number of dbs:", length(list.files(folder_path, pattern = ".db"))))
+  cli::cli_alert_info("  Number of csvs: {length(list.files(folder_path, pattern = 'HarvestReport'))}")
+  cli::cli_alert_info("  Number of dbs: {length(list.files(folder_path, pattern = '.db'))}")
   apsimx_filepaths <- list.files(folder_path, pattern = ".apsimx", full.names = TRUE)
-  custom_summary(paste("  Number of apsimxs:", length(apsimx_filepaths)))
+  cli::cli_alert_info("  Number of apsimxs: {length(apsimx_filepaths)}")
 }
 
 lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, parallel = FALSE) {
   if (parallel) {
-    custom_cat(paste0("Running in parallel with ", CONFIG_MULTICORES, " cores"))
+    cli::cli_alert_success("Running in parallel with {CONFIG_MULTICORES} cores")
   } else {
-    custom_cat("Not using parallel")
+    cli::cli_alert_success("Not using parallel")
   }
 
   # Create progress bar
