@@ -1,4 +1,4 @@
-just_run_apsimx <- function(
+run_apsimx <- function(
   apsimx_filepath,
   read_output = FALSE,
   simulations_names = NA,
@@ -64,7 +64,7 @@ just_run_apsimx <- function(
 
   if (read_output) {
     db_filepath <- sub("\\.apsimx$", ".db", apsimx_filepath)
-    return(summarize_sim_db(db_filepath))
+    return(sensi_summarize_harvest_db(db_filepath))
   } else {
     return(NA)
   }
@@ -121,10 +121,10 @@ run_apsimxs <- function(
 
   cli::cli_alert_success("Running {length(apsimx_filepaths)} apsimx simulations...")
 
-  res <- lapply_parallel_progressbar(
+  res <- .lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
-      just_run_apsimx(
+      run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],
         simulations_names = simulations_names,
         dry_run = dry_run

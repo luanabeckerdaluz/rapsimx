@@ -93,7 +93,7 @@ generate_apsimxs <- function(
 
   cli::cli_alert_success("Generating {nrow(samples_df)} samples...")
 
-  res <- lapply_parallel_progressbar(
+  res <- .lapply_parallel_progressbar(
     x_must_be_num_array = seq_len(nrow(samples_df)),
     FUN = function(i) {
       list_params_values <- samples_df[i, , drop = TRUE]

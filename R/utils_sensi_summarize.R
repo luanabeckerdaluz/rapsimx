@@ -33,7 +33,7 @@ read_db_table <- function(
   return(df)
 }
 
-summarize_sim_db <- function(
+sensi_summarize_harvest_db <- function(
   db_filepath,
   number_of_fields_to_check = NA) {
 
@@ -99,7 +99,7 @@ summarize_sim_db <- function(
   return(summarized_df)
 }
 
-summarize_harvest_dbs <- function(
+sensi_summarize_harvest_dbs <- function(
   sensi_folder,
   ids_to_summarize = NA,
   number_of_fields_to_check = NA,
@@ -174,10 +174,10 @@ summarize_harvest_dbs <- function(
     return(NULL)
   }
 
-  res <- lapply_parallel_progressbar(
+  res <- .lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(files_list),
     FUN = function(i) {
-      summarize_sim_db(
+      sensi_summarize_harvest_db(
         db_filepath = files_list[i],
         number_of_fields_to_check = number_of_fields_to_check
       )

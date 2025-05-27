@@ -9,7 +9,7 @@ print_stats_of_folder <- function(folder_path) {
   cli::cli_alert_info("  Number of apsimxs: {length(apsimx_filepaths)}")
 }
 
-lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, parallel = FALSE) {
+.lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, parallel = FALSE) {
   if (parallel) {
     cli::cli_alert_success("Running in parallel with {CONFIG_MULTICORES} cores")
   } else {

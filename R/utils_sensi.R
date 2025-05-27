@@ -1,4 +1,4 @@
-generate_sensi_folder <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
+sensi_generate_folder <- function(folderpath, copy_met_data_from, overwrite = FALSE) {
   # normalize folderpath
   folderpath <- normalizePath(folderpath, mustWork = FALSE)
 
@@ -30,7 +30,7 @@ generate_sensi_folder <- function(folderpath, copy_met_data_from, overwrite = FA
   return(folderpath)
 }
 
-load_problem <- function(folder = NA) {
+sensi_load_problem <- function(folder = NA) {
   # Try loading problem from folder
   problem_filepath <- file.path(folder, "problem.R")
   if (file.exists(problem_filepath)) {
@@ -43,12 +43,12 @@ load_problem <- function(folder = NA) {
   return(problem)
 }
 
-load_problem_from_current_folder <- function() {
+sensi_load_problem_current_folder <- function() {
   folder <- getwd()
-  load_problem(folder)
+  sensi_load_problem(folder)
 }
 
-load_samples <- function(
+sensi_load_samples <- function(
   save_csv_to_folder,
   plot = FALSE) {
 
@@ -63,13 +63,13 @@ load_samples <- function(
 
   if (plot) {
     print(head(samples_df))
-    plot_samples_distribution(samples_df)
+    sensi_plot_samples_distribution(samples_df)
   }
 
   return(samples_df)
 }
 
-generate_samples_csv <- function(
+sensi_generate_samples_csv <- function(
   problem = NA,
   method = NA,
   N_SAMPLES = NA,
@@ -159,7 +159,7 @@ generate_samples_csv <- function(
   }
 }
 
-plot_samples_distribution <- function(samples_df) {
+sensi_plot_samples_distribution <- function(samples_df) {
   plt <- samples_df %>%
     tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
     ggplot(aes(x = seq_len(nrow(.)), y = value)) +
@@ -169,7 +169,7 @@ plot_samples_distribution <- function(samples_df) {
   plot(plt)
 }
 
-sensi_folder_load <- function(sensi_folder = NA) {
+sensi_load_folder <- function(sensi_folder = NA) {
   cli::cli_alert_success("Folder {sensi_folder} already exists. Checking...")
   problem_filepath <- file.path(sensi_folder, "problem.R")
   if (file.exists(problem_filepath)) {

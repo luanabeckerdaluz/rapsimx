@@ -1,4 +1,4 @@
-si_to_df <- function(Si) {
+.si_to_df <- function(Si) {
   df <- data.frame(
     names =   unlist(Si["names"]),
     S1 =      unlist(Si["S1"]),
@@ -9,7 +9,7 @@ si_to_df <- function(Si) {
   return(df)
 }
 
-si_to_df_sobol <- function(Si, names) {
+.si_to_df_sobol <- function(Si, names) {
   df <- data.frame(
     names =   names,
     S1 =      Si$S1,
@@ -67,10 +67,10 @@ salib_for_one_field_and_param <- function(
   si_df <- NA
   if (salib_sobol) {
     Si <- analyze$analyze(problem, np_arr, calc_second_order = TRUE)
-    si_df <- si_to_df_sobol(Si, problem$names)
+    si_df <- .si_to_df_sobol(Si, problem$names)
   } else {
     Si <- analyze$analyze(problem, np_arr)
-    si_df <- si_to_df(Si)
+    si_df <- .si_to_df(Si)
   }
 
   si_df <- si_df %>%
