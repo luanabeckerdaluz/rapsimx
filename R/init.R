@@ -5,13 +5,6 @@ init <- function(
   multicores = parallel::detectCores() - 2,
   models_command = NA) {
 
-  # Source modules
-  source(file.path("../", "R", "utils_sensi_salib.R"))
-  source(file.path("../", "R", "utils_sensi_generate.R"))
-  source(file.path("../", "R", "utils_sensi_summarize.R"))
-  source(file.path("../", "R", "utils_sensi.R"))
-  source(file.path("../", "R", "utils.R"))
-
   # Config multicores
   if (multicores >= parallel::detectCores()) {
     cli::cli_alert_danger("ERROR: Multicores parameter ({multicores}) is greater or equal than detected multicores ({parallel::detectCores()})")
@@ -27,6 +20,7 @@ init <- function(
     if (Sys.info()["sysname"] == "Linux" || Sys.info()["sysname"] == "Darwin") {
       CONFIG_MODELS_COMMAND <<- "/usr/local/bin/Models"
     } else if (Sys.info()["sysname"] == "Windows") {
+      # TODO: Detect Windows apsimx path
       CONFIG_MODELS_COMMAND <<- "C:\\APSIM2024.5.7504.0\\bin\\Models.exe"
     }
   }
