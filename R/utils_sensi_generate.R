@@ -27,7 +27,7 @@ generate_apsimx <- function(
   )
 
   # Replace parameters
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = filepath_sim,
     VERBOSE = FALSE,
     list_params_values = list_params_values
@@ -62,7 +62,7 @@ generate_apsimxs <- function(
     stop()
   } else {
     cli::cli_alert_success("Loading 'samples.csv' from folder {sensi_folder}")
-    samples_df <- read.csv(samples_csv_filepath)
+    samples_df <- read.csv(samples_csv_filepath, row.names = NULL)
   }
 
   sims_folder <- file.path(sensi_folder, "sims_and_met")
@@ -98,7 +98,7 @@ generate_apsimxs <- function(
     FUN = function(i) {
       list_params_values <- samples_df[i, , drop = TRUE]
       generate_apsimx(
-        list_params_values = list_params_values,
+        list_params_values = list_params_values[2:length(list_params_values)],
         id = as.numeric(list_params_values[["id"]]),
         folder = sims_folder,
         sensit_base_sim_filepath = sensit_base_sim_filepath,

@@ -58,7 +58,7 @@ load_samples <- function(
     stop()
   } else {
     cli::cli_alert_success("Loading samples from {samples_csv_filepath}")
-    samples_df <- read.csv(samples_csv_filepath)
+    samples_df <- read.csv(samples_csv_filepath, row.names = NULL)
   }
 
   if (plot) {
@@ -144,18 +144,18 @@ generate_samples_csv <- function(
   # Save csv
   write.csv(samples_df, samples_csv_filepath, row.names = FALSE)
   if (overwrite) {
-    cli::cli_text(cli::col_green("✔ File 'samples.csv' was overwriten!"))
+    cli::cli_alert_success("File 'samples.csv' was overwriten!")
   } else {
-    cli::cli_text(cli::col_green("✔ File 'samples.csv' was created!"))
+    cli::cli_alert_success("File 'samples.csv' was created!")
   }
 
   # Copy problem to sensi folder
   saveRDS(problem, file.path(save_csv_to_folder, "problem.rds"))
   cat("problem <- ", deparse(problem), file = file.path(save_csv_to_folder, "problem.R"))
   if (overwrite) {
-    cli::cli_text(cli::col_green("✔ Files 'problem.R' and 'problem.rds' were overwriten!"))
+    cli::cli_alert_success("Files 'problem.R' and 'problem.rds' were overwriten!")
   } else {
-    cli::cli_text(cli::col_green("✔ Files 'problem.R' and 'problem.rds' were created!"))
+    cli::cli_alert_success("Files 'problem.R' and 'problem.rds' were created!")
   }
 }
 
@@ -170,22 +170,22 @@ plot_samples_distribution <- function(samples_df) {
 }
 
 sensi_folder_load <- function(sensi_folder = NA) {
-  cli::cli_text(cli::col_green("✔ Folder {sensi_folder} already exists. Checking..."))
+  cli::cli_alert_success("Folder {sensi_folder} already exists. Checking...")
   problem_filepath <- file.path(sensi_folder, "problem.R")
   if (file.exists(problem_filepath)) {
-    cli::cli_text(cli::col_green("✔ 'problem.R' is available!"))
+    cli::cli_alert_success("'problem.R' is available!")
   }
   summarize_filepath <- file.path(sensi_folder, "summarized.csv")
   if (file.exists(summarize_filepath)) {
-    cli::cli_text(cli::col_green("✔ 'summarized.csv' is available!"))
+    cli::cli_alert_success("'summarized.csv' is available!")
   }
   samples_csv_filepath <- file.path(sensi_folder, "samples.csv")
   if (file.exists(samples_csv_filepath)) {
-    cli::cli_text(cli::col_green("✔ 'samples.csv' is available!"))
+    cli::cli_alert_success("'samples.csv' is available!")
   }
   salib_filepath <- file.path(sensi_folder, "salib.csv")
   if (file.exists(salib_filepath)) {
-    cli::cli_text(cli::col_green("✔ 'salib.csv' is available!"))
+    cli::cli_alert_success("'salib.csv' is available!")
   }
   return(sensi_folder)
 }

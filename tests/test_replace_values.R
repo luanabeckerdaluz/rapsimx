@@ -1,5 +1,3 @@
-source(file.path("..", "R", "modify_parameters.R"))
-
 library(testthat)
 library(rapsimng)
 
@@ -12,7 +10,7 @@ on.exit({ if (file.exists(test_path)) file.remove(test_path) })
 
 test_that("invalid parameter", {
   expect_error(
-    replace_values(
+    rapsimx.run::replace_values(
       apsimx_path = test_path,
       list_params_values = list(
         "this_doesnt_exist" = 999
@@ -23,7 +21,7 @@ test_that("invalid parameter", {
 
 test_that("phen_VegAndRepTherTimRes_bothX3 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_VegAndRepTherTimRes_bothX3" = new_value
@@ -37,7 +35,7 @@ test_that("phen_VegAndRepTherTimRes_bothX3 was modified", {
 
 test_that("phen_VegAndRepPhoMod_bothX1 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_VegAndRepPhoMod_bothX1" = new_value
@@ -50,7 +48,7 @@ test_that("phen_VegAndRepPhoMod_bothX1 was modified", {
 
 test_that("phen_VegTherTimeResp_X3 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_VegTherTimeResp_X3" = new_value
@@ -62,7 +60,7 @@ test_that("phen_VegTherTimeResp_X3 was modified", {
 
 test_that("phen_RepTherTimeResp_X3 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_RepTherTimeResp_X3" = new_value
@@ -74,7 +72,7 @@ test_that("phen_RepTherTimeResp_X3 was modified", {
 
 test_that("phen_VegPhoMod_X1 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_VegPhoMod_X1" = new_value
@@ -86,7 +84,7 @@ test_that("phen_VegPhoMod_X1 was modified", {
 
 test_that("phen_RepPhoMod_X1 was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_RepPhoMod_X1" = new_value
@@ -98,7 +96,7 @@ test_that("phen_RepPhoMod_X1 was modified", {
 
 test_that("phen_VegetativeTarget was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_VegetativeTarget" = new_value
@@ -110,7 +108,7 @@ test_that("phen_VegetativeTarget was modified", {
 
 test_that("phen_EarlyFloweringTarget was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_EarlyFloweringTarget" = new_value
@@ -122,7 +120,7 @@ test_that("phen_EarlyFloweringTarget was modified", {
 
 test_that("phen_EarlyPodDevTarget was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_EarlyPodDevTarget" = new_value
@@ -134,7 +132,7 @@ test_that("phen_EarlyPodDevTarget was modified", {
 
 test_that("phen_FractGrainFill was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_FractGrainFill" = new_value
@@ -146,7 +144,7 @@ test_that("phen_FractGrainFill was modified", {
 
 test_that("phen_EntGrainFill was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_EntGrainFill" = new_value
@@ -158,7 +156,7 @@ test_that("phen_EntGrainFill was modified", {
 
 test_that("phen_MidGrainFill was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_MidGrainFill" = new_value
@@ -170,7 +168,7 @@ test_that("phen_MidGrainFill was modified", {
 
 test_that("phen_Maturing was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_Maturing" = new_value
@@ -182,7 +180,7 @@ test_that("phen_Maturing was modified", {
 
 test_that("phen_Ripening was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_Ripening" = new_value
@@ -194,7 +192,7 @@ test_that("phen_Ripening was modified", {
 
 test_that("phen_shootlag was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_shootlag" = new_value
@@ -206,7 +204,7 @@ test_that("phen_shootlag was modified", {
 
 test_that("phen_shootrate was modified", {
   new_value <- 40
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "phen_shootrate" = new_value
@@ -218,7 +216,7 @@ test_that("phen_shootrate was modified", {
 
 test_that("leaf_RUE was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "leaf_RUE" = new_value
@@ -230,7 +228,7 @@ test_that("leaf_RUE was modified", {
 
 test_that("leaf_AreaLargLeaf was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "leaf_AreaLargLeaf" = new_value
@@ -242,7 +240,7 @@ test_that("leaf_AreaLargLeaf was modified", {
 
 test_that("leaf_Phyllochron was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "leaf_Phyllochron" = new_value
@@ -254,7 +252,7 @@ test_that("leaf_Phyllochron was modified", {
 
 test_that("leaf_ExtinctionCoef_Y1 was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "leaf_ExtinctionCoef_Y1" = new_value
@@ -266,7 +264,7 @@ test_that("leaf_ExtinctionCoef_Y1 was modified", {
 
 test_that("grain_HarvIndex was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "grain_HarvIndex" = new_value
@@ -278,7 +276,7 @@ test_that("grain_HarvIndex was modified", {
 
 test_that("root_EarlyFrontVel was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "root_EarlyFrontVel" = new_value
@@ -290,7 +288,7 @@ test_that("root_EarlyFrontVel was modified", {
 
 test_that("root_LateFrontVel was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "root_LateFrontVel" = new_value
@@ -302,7 +300,7 @@ test_that("root_LateFrontVel was modified", {
 
 test_that("nodule_VegGrowthRate was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "nodule_VegGrowthRate" = new_value
@@ -314,7 +312,7 @@ test_that("nodule_VegGrowthRate was modified", {
 
 test_that("nodule_RepGrowthRate was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "nodule_RepGrowthRate" = new_value
@@ -326,7 +324,7 @@ test_that("nodule_RepGrowthRate was modified", {
 
 test_that("nodule_MaxFixRate was modified", {
   new_value <- 2.0
-  replace_values(
+  rapsimx.run::replace_values(
     apsimx_path = test_path,
     list_params_values = list(
       "nodule_MaxFixRate" = new_value
