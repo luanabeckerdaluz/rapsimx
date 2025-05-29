@@ -57,8 +57,8 @@ sensi_summarize_harvest_db <- function(
   # print(head(df_db_harvest_report))
 
   # ID   Name   FolderName
-  df_db_simulations <- read_db_table(db_filepath, "_Simulations") %>%
-    select(-FolderName) %>%
+  df_db_simulations <- read_db_table(db_filepath, "_Simulations") |>
+    select(-FolderName) |>
     rename(SimulationID = ID)
   # print(head(df_db_simulations))
 
@@ -66,8 +66,8 @@ sensi_summarize_harvest_db <- function(
   # print(head(df_db_harvest_report))
   # print(head(read_db_table(db_filepath, "_Simulations")))
 
-  summarized_df <- df_db_harvest_report %>%
-    merge(df_db_simulations, by = "SimulationID") %>%
+  summarized_df <- df_db_harvest_report |>
+    merge(df_db_simulations, by = "SimulationID") |>
     dplyr::rename(
       field = Name,
       yield = Yield,
@@ -78,7 +78,7 @@ sensi_summarize_harvest_db <- function(
       # start_grain_filling = Soybean.Phenology.StartGrainFillingDAS,
       # end_grain_filling = Soybean.Phenology.EndGrainFillDAS,
       maturity = Soybean.Phenology.MaturityDAS
-    ) %>%
+    ) |>
     dplyr::select(field, yield, biomass, maturity)
     # dplyr::select(field, yield, biomass, emergence, flowering, start_pod_development,
     #   start_grain_filling, end_grain_filling, maturity)
@@ -87,8 +87,8 @@ sensi_summarize_harvest_db <- function(
 
   sim_id <- get_id_from_filepath(db_filepath)
   if (!is.na(sim_id)) {
-    summarized_df <- summarized_df %>%
-      dplyr::mutate(id = sim_id) %>%
+    summarized_df <- summarized_df |>
+      dplyr::mutate(id = sim_id) |>
       dplyr::select(id, everything())
   }
 

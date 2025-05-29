@@ -144,9 +144,9 @@ sensi_generate_samples_csv <- function(
   }
   head(samples)
 
-  samples_df <- as.data.frame(samples) %>%
-    `colnames<-`(problem$names) %>%
-    dplyr::mutate(id = as.integer(rownames(.))) %>%
+  samples_df <- as.data.frame(samples) |>
+    `colnames<-`(problem$names) |>
+    dplyr::mutate(id = as.integer(rownames(.))) |>
     dplyr::select(id, everything())
   dim(samples_df)
   head(samples_df)
@@ -170,8 +170,8 @@ sensi_generate_samples_csv <- function(
 }
 
 sensi_plot_samples_distribution <- function(samples_df) {
-  plt <- samples_df %>%
-    tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
+  plt <- samples_df |>
+    tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") |>
     ggplot(aes(x = seq_len(nrow(.)), y = value)) +
       facet_wrap(variable ~ ., scale = "free_y") +
       geom_point(size = 1)

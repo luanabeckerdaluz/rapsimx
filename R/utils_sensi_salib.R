@@ -40,8 +40,8 @@ salib_for_one_field_and_param <- function(
     stop()
   }
 
-  arr <- df %>%
-    filter(field == !!field) %>%
+  arr <- df |>
+    filter(field == !!field) |>
     pull(!!param)
 
   if (number_of_simulations < length(arr)) {
@@ -73,7 +73,7 @@ salib_for_one_field_and_param <- function(
     si_df <- .si_to_df(Si)
   }
 
-  si_df <- si_df %>%
+  si_df <- si_df |>
     mutate(field = !!field) |>
     mutate(param = !!param) |>
     select(field, param, everything())
