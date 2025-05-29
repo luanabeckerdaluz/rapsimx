@@ -7,18 +7,28 @@ sensi_generate_folder <- function(folderpath, copy_met_data_from, overwrite = FA
     # Crete tmp folder
     dir.create(folderpath, recursive = TRUE, showWarnings = FALSE)
 
-    # Create sims_and_met folder
+    # Create "sims_and_met" folder
     tmp_simulations_folder <- file.path(folderpath, "sims_and_met")
     if (!dir.exists(tmp_simulations_folder)) {
       dir.create(tmp_simulations_folder, recursive = TRUE, showWarnings = FALSE)
     }
-    # Copy met data to sims_and_met folder
-    file.copy(
-      list.files(copy_met_data_from, full.names = TRUE),
-      tmp_simulations_folder,
-      recursive = TRUE,
-      overwrite = TRUE
-    )
+    # Copy met data to "sims_and_met" folder
+    if (!dir.exists(copy_met_data_from)) {
+      cli::cli_alert_danger("{copy_met_data_from} folder does not exist!")
+      stop()
+    } else {
+      if (length(list.files(copy_met_data_from, full.names = TRUE)) == 0) {
+        cli::cli_alert_danger("{copy_met_data_from} does folder is empty! If you want to create the folder anyway, please remove the parameter 'copy_met_data_from'.")
+        stop()
+      } else {
+        file.copy(
+          list.files(copy_met_data_from, full.names = TRUE),
+          tmp_simulations_folder,
+          recursive = TRUE,
+          overwrite = TRUE
+        )
+      }
+    }
 
     cli::cli_alert_success("Folder {folderpath} was created!")
   }
