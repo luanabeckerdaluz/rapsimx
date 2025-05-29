@@ -16,26 +16,7 @@ sensi_load_problem_current_folder <- function() {
   sensi_load_problem(folder)
 }
 
-sensi_load_samples <- function(
-  save_csv_to_folder,
-  plot = FALSE) {
 
-  samples_csv_filepath <- file.path(save_csv_to_folder, "samples.csv")
-  if (!file.exists(samples_csv_filepath)) {
-    cli::cli_alert_danger("File {samples_csv_filepath} does not exist! Please, generate samples. Aborting loading...")
-    stop()
-  } else {
-    cli::cli_alert_success("Loading samples from {samples_csv_filepath}")
-    samples_df <- read.csv(samples_csv_filepath, row.names = NULL)
-  }
-
-  if (plot) {
-    print(head(samples_df))
-    sensi_plot_samples_distribution(samples_df)
-  }
-
-  return(samples_df)
-}
 
 sensi_generate_samples_csv <- function(
   problem = NA,
@@ -127,33 +108,4 @@ sensi_generate_samples_csv <- function(
   }
 }
 
-sensi_plot_samples_distribution <- function(samples_df) {
-  plt <- samples_df |>
-    tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") |>
-    ggplot(aes(x = seq_len(nrow(.)), y = value)) +
-      facet_wrap(variable ~ ., scale = "free_y") +
-      geom_point(size = 1)
 
-  plot(plt)
-}
-
-sensi_load_folder <- function(sensi_folder = NA) {
-  cli::cli_alert_success("Folder {sensi_folder} already exists. Checking...")
-  problem_filepath <- file.path(sensi_folder, "problem.R")
-  if (file.exists(problem_filepath)) {
-    cli::cli_alert_success("'problem.R' is available!")
-  }
-  summarize_filepath <- file.path(sensi_folder, "summarized.csv")
-  if (file.exists(summarize_filepath)) {
-    cli::cli_alert_success("'summarized.csv' is available!")
-  }
-  samples_csv_filepath <- file.path(sensi_folder, "samples.csv")
-  if (file.exists(samples_csv_filepath)) {
-    cli::cli_alert_success("'samples.csv' is available!")
-  }
-  salib_filepath <- file.path(sensi_folder, "salib.csv")
-  if (file.exists(salib_filepath)) {
-    cli::cli_alert_success("'salib.csv' is available!")
-  }
-  return(sensi_folder)
-}

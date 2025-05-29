@@ -1,6 +1,8 @@
 RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
   public = list(
     folder = NULL,
+    problem = NULL,
+    problem_csv_filepath = NULL,
     sims_and_mets_folderpath = NULL,
     samples_df = NULL,
     samples_csv_filepath = NULL,
@@ -8,20 +10,22 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
     salib_csv_filepath = NULL,
     summarize_df = NULL,
     summarize_csv_filepath = NULL,
-    multicores = parallel::detectCores() - 2,
-    models_command = NA,
+    multicores = NULL,
+    models_command = NULL,
 
-    initialize = function(folder, copy_met_data_from = NA, multicores, models_command) {
+    initialize = function(folder, copy_met_data_from = NA, multicores = NA, models_command) {
       self$samples_csv_filepath <- file.path(self$folder, "samples.csv")
       self$summarize_csv_filepath <- file.path(self$folder, "summarized.csv")
       self$salib_csv_filepath <- file.path(self$folder, "salib.csv")
       self$sims_and_mets_folderpath <- file.path(self$folder, "sims_and_mets")
-      self$multicores <- multicores
 
       # Config multicores
-      if (self$multicores >= parallel::detectCores()) {
-        cli::cli_alert_danger("ERROR: Multicores parameter ({multicores}) is greater or equal than detected multicores ({parallel::detectCores()})")
-        stop()
+      if (!is.na(multicores)) {
+        if (multicores >= parallel::detectCores()) {
+          cli::cli_alert_danger("ERROR: Multicores parameter ({multicores}) is greater or equal than detected multicores ({parallel::detectCores()})")
+          stop()
+        }
+        self$multicores <- multicores
       }
 
       # Set apsimx Models command
@@ -81,18 +85,39 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
     },
 
     load_folder = function() {
-      # Aqui você pode verificar arquivos essenciais, validar estrutura, etc.
-      message("[+] Estrutura carregada.")
+      cli::cli_alert_success("Folder {sensi_folder} already exists. Checking...")
+      if (file.exists(self$problem_csv_filepath)) {
+        cli::cli_alert_success("'problem.R' is available!")
+      }
+      if (file.exists(summarize_csv_filepath)) {
+        cli::cli_alert_success("'summarize.csv' is available!")
+      }
+      if (file.exists(self$samples_csv_filepath)) {
+        cli::cli_alert_success("'samples.csv' is available!")
+      }
+      if (file.exists(self$salib_csv_filepath)) {
+        cli::cli_alert_success("'salib.csv' is available!")
+      }
     },
 
     try_load_samples_csv = function() {
       samples_csv_filepath <- file.path(self$folder, "samples.csv")
       if (file.exists(samples_csv_filepath)) {
         self$samples_df <- read.csv(samples_csv_filepath, row.names = NULL)
-        cli::cli_alert_success("'samples.csv' loaded!")
+        cli::cli_alert_success("Samples {samples_csv_filepath} loaded")
       } else {
-        stop("[✖] samples.csv não encontrado em ", path)
+        cli::cli_alert_danger("File {samples_csv_filepath} does not exist! Please, generate samples. Aborting loading...")
+        stop()
       }
+    },
+
+    plot_samples_distribution = function() {
+      plt <- self$samples_df |>
+        tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") |>
+        ggplot(aes(x = seq_len(nrow(.)), y = value)) +
+          facet_wrap(variable ~ ., scale = "free_y") +
+          geom_point(size = 1)
+      plot(plt)
     },
 
     try_load_salib_csv = function() {
@@ -268,6 +293,94 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         multicores = self$multicores,
         dry_run = dry_run
       )
+    },
+
+    compute_salib_for_all_params_and_fields = function(salib_sobol = FALSE, columns_to_exclude = c("id", "field"), params = NA, fields = NA, fix_NAs_with_mean = FALSE, dry_run = FALSE, overwrite = FALSE) {
+
+      # Check if salib.csv already exists
+      salib_csv_filepath <- file.path(self$folder, "salib.csv")
+      if (file.exists(salib_csv_filepath)) {
+        if (overwrite) {
+          cli::cli_alert_warning("'salib.csv' file already exists on {self$folder} folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!")
+        } else {
+          cli::cli_alert_danger("'salib.csv' file already exists on {self$folder} folder! Please, if you want to create a new salib csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
+          stop()
+        }
+      } else {
+        cli::cli_alert_success("'salib.csv' file doesn't exist. Generating...")
+        overwrite <- FALSE
+      }
+
+      # Print parallel status
+      if (!is.null(self$multicores)) {
+        cli::cli_alert_success("Running in parallel with {self$multicores} cores")
+      } else {
+        cli::cli_alert_success("Not using parallel")
+      }
+
+      # Get number of simulations (samples nrow)
+      number_of_simulations <- nrow(self$df_samples)
+
+      # Get only params to compute salib
+      if (anyNA(params)) {
+        params <- colnames(df)[!colnames(df) %in% columns_to_exclude]
+      }
+
+      # Get fields
+      if (anyNA(fields)) {
+        fields <- unique(df$field)
+      }
+
+      # Generate all combinations of fields and params
+      all_combinations <- expand.grid(fields, params)
+      # print(all_combinations)
+
+      # For each combination of fields and params, compute SALib
+
+      apply_parameters <- list(
+        X = all_combinations,
+        MARGIN = 1,
+        future.seed = TRUE,
+        FUN = function(x) {
+          field <- x[1]
+          param <- x[2]
+          .salib_for_one_field_and_param(
+            df = df,
+            field = field,
+            param = param,
+            number_of_simulations = number_of_simulations,
+            problem = self$problem,
+            salib_sobol = salib_sobol,
+            fix_NAs_with_mean = fix_NAs_with_mean,
+            dry_run = dry_run
+          )
+        }
+      )
+
+      if (!is.null(self$multicores)) {
+        cl <- parallel::makeCluster(self$multicores)
+        future::plan(future::cluster, workers = cl)
+        list_dfs_salibs <- do.call(future.apply::future_apply, apply_parameters)
+        parallel::stopCluster(cl)
+      } else {
+        list_dfs_salibs <- do.call(apply, apply_parameters)
+      }
+
+      if (dry_run) {
+        return(data.frame())
+      }
+
+      # rbind all combination df
+      rbind_salibs <- Reduce(function(x, y) rbind(x, y, all = TRUE), list_dfs_salibs) |>
+        filter(param != TRUE, field != TRUE)
+
+      # Save csv
+      write.csv(rbind_salibs, self$salib_csv_filepath, row.names = FALSE)
+      if (overwrite) {
+        cli::cli_alert_success("File 'salib.csv' was overwriten!")
+      } else {
+        cli::cli_alert_success("File 'salib.csv' was created!")
+      }
     }
   )
 )
