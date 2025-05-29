@@ -71,15 +71,14 @@ run_apsimx <- function(
 }
 
 run_apsimxs <- function(
-  sensi_folder,
+  sims_folder,
   runs_only_some_n = NA,
   simulations_names = NA,
   ids_to_run = NA,
-  parallel = TRUE,
+  multicores = TRUE,
   dry_run = FALSE) {
 
   # Check if simulation folder exists on sensi folder
-  sims_folder <- file.path(sensi_folder, "sims_and_met")
   if (!file.exists(sims_folder)) {
     cli::cli_alert_danger("{basename(sims_folder)} folder does not exist on sensi folder {sensi_folder}!")
     stop()
@@ -130,7 +129,7 @@ run_apsimxs <- function(
         dry_run = dry_run
       )
     },
-    parallel = parallel
+    multicores = multicores
   )
 
   # Print folder stats
