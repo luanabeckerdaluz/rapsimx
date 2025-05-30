@@ -44,7 +44,7 @@
 #' @param apsimx_path apsimx simulation fullpath
 #' @param VERBOSE If print debug
 #' @param list_params_values List containing key: value
-#' @return NA
+#' @return NULL
 #' @export
 replace_values <- function(
   apsimx_path,

@@ -1,9 +1,9 @@
 run_apsimx <- function(
   apsimx_filepath,
   read_output = FALSE,
-  simulations_names = NA,
-  from_config_file = NA,
-  xlsx_or_met_folder = NA,
+  simulations_names = NULL,
+  from_config_file = NULL,
+  xlsx_or_met_folder = NULL,
   dry_run = FALSE) {
 
   # Check inputs
@@ -13,13 +13,13 @@ run_apsimx <- function(
   }
 
   # Copy all .xlsx or .met files to the same folder of simulation
-  if (!is.na(xlsx_or_met_folder)) {
+  if (!is.null(xlsx_or_met_folder)) {
     files_to_copy <- list.files(xlsx_or_met_folder, pattern = "\\.(xlsx|met)$", full.names = TRUE)
     file.copy(files_to_copy, dirname(apsimx_filepath), overwrite = TRUE)
   }
 
-  command <- NA
-  if(!is.na(from_config_file)) {
+  command <- NULL
+  if(!is.null(from_config_file)) {
     command <- glue::glue("{CONFIG_MODELS_COMMAND} --apply {from_config_file}")
   }
   else {
@@ -66,21 +66,21 @@ run_apsimx <- function(
     db_filepath <- sub("\\.apsimx$", ".db", apsimx_filepath)
     return(sensi_summarize_harvest_db(db_filepath))
   } else {
-    return(NA)
+    return(NULL)
   }
 }
 
 run_apsimxs <- function(
   sims_folder,
-  runs_only_some_n = NA,
-  simulations_names = NA,
-  ids_to_run = NA,
+  runs_only_some_n = NULL,
+  simulations_names = NULL,
+  ids_to_run = NULL,
   multicores = TRUE,
   dry_run = FALSE) {
 
   # Check if simulation folder exists on sensi folder
   if (!file.exists(sims_folder)) {
-    cli::cli_alert_danger("{basename(sims_folder)} folder does not exist on sensi folder {sensi_folder}!")
+    cli::cli_alert_danger("{basename(sims_folder)} folder does not exist!")
     stop()
   }
 
@@ -105,7 +105,7 @@ run_apsimxs <- function(
   }
 
   # If necessary, filter df to run just N sims
-  if (!is.na(runs_only_some_n)) {
+  if (!is.null(runs_only_some_n)) {
     if (!is.integer(runs_only_some_n)) {
       cli::cli_alert_danger("'runs_only_some_n' must be an integer number (e.g. '5L')")
       stop()
@@ -134,4 +134,83 @@ run_apsimxs <- function(
 
   # Print folder stats
   print_stats_of_folder(sims_folder)
+}
+
+generate_apsimx <- function(
+  list_params_values,
+  id,
+  folder,
+  sensit_base_sim_filepath,
+  dry_run = FALSE) {
+
+  # Check if base sim exists
+  if (!file.exists(sensit_base_sim_filepath)) {
+    stop("ERROR! Base sim does not exist!")
+  }
+
+  # Copy base simulation to tmp folder
+  filepath_sim <- file.path(folder, glue::glue("simulation{id}.apsimx"))
+
+  # If dry_run, print and return
+  if (dry_run) {
+    cli::cli_alert_success("It will generate file {filepath_sim}")
+    return(NULL)
+  }
+
+  # Copy base simulation to new sim that will be modified
+  file.copy(
+    sensit_base_sim_filepath,
+    filepath_sim,
+    overwrite = TRUE
+  )
+
+  # Replace parameters
+  rapsimx.run::replace_values(
+    apsimx_path = filepath_sim,
+    VERBOSE = FALSE,
+    list_params_values = list_params_values
+  )
+
+  return(filepath_sim)
+}
+
+.lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, multicores = NULL) {
+  if (is.null(multicores)) {
+    cli::cli_alert_success("Running in parallel with {multicores} cores")
+  } else {
+    cli::cli_alert_success("Not using parallel")
+  }
+
+  # Create progress bar
+  pb_generate <- NULL
+  if (is.null(multicores)) {
+    pb_generate <- txtProgressBar(min = 0, max = length(x_must_be_num_array), style = 3)
+  }
+
+  # Run lapply
+  lapply_arguments <- list(
+    X = x_must_be_num_array,
+    FUN = function(i) {
+      res <- FUN(i)
+      if (is.null(multicores)) setTxtProgressBar(pb_generate, i)
+      return(res)
+    }
+  )
+
+  # Configure parallel or sequential
+  if (!is.null(multicores)) {
+    cl <- parallel::makeCluster(multicores)
+    future::plan(future::cluster, workers = cl)
+    res <- do.call(future.apply::future_lapply, lapply_arguments)
+    parallel::stopCluster(cl)
+  } else {
+    # future::plan(future::sequential)
+    # res <- do.call(future.apply::future_lapply, lapply_arguments)
+    res <- do.call(lapply, lapply_arguments)
+  }
+
+  # Close progress bar
+  if (is.null(multicores)) close(pb_generate)
+
+  return(res)
 }

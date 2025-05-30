@@ -54,7 +54,7 @@
   }
 
   if (fix_NAs_with_mean) {
-    arr[is.na(arr)] <- mean(arr, na.rm = TRUE)
+    arr[is.null(arr)] <- mean(arr, na.rm = TRUE)
   }
 
   np <- import("numpy")
