@@ -29,6 +29,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
           stop()
         }
         self$multicores <- multicores
+        cli::cli_alert_success("Parallel enabled! Multicores = {self$multicores}")
       }
 
       # Set apsimx Models command
@@ -43,10 +44,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
           self$models_command <<- "C:\\APSIM2024.5.7504.0\\bin\\Models.exe"
         }
       }
-
-      # Show summary
       cli::cli_alert_success("ApsimX Models folder = {self$models_command}")
-      cli::cli_alert_success("Multicores = {self$multicores}")
 
       # Create sensi folder
       if (!dir.exists(self$folder)) {
@@ -54,10 +52,12 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         self$generate_folder(copy_met_data_from)
       } else {
         cli::cli_alert_success("Folder {self$folder} already exists!. Loading...")
-        self$load_folder()
+        # self$load_folder()
+        self$try_load_problem()
         self$try_load_samples_csv()
-        self$try_load_salib_csv()
         self$try_load_summarize_csv()
+        self$try_load_salib_csv()
+        self$files_summary()
       }
     },
 
@@ -86,39 +86,37 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       }
     },
 
-    load_folder = function() {
-      if (file.exists(self$problem_filepath)) {
-        cli::cli_alert_success("'problem.R' is available!")
-      }
-      if (file.exists(self$summarize_csv_filepath)) {
-        cli::cli_alert_success("'summarize.csv' is available!")
-      }
-      if (file.exists(self$samples_csv_filepath)) {
-        cli::cli_alert_success("'samples.csv' is available!")
-      }
-      if (file.exists(self$salib_csv_filepath)) {
-        cli::cli_alert_success("'salib.csv' is available!")
-      }
-    },
+    # load_folder = function() {
+    #   if (file.exists(self$problem_filepath)) {
+    #     cli::cli_alert_success("'problem.R' is available!")
+    #   }
+    #   if (file.exists(self$summarize_csv_filepath)) {
+    #     cli::cli_alert_success("'summarize.csv' is available!")
+    #   }
+    #   if (file.exists(self$samples_csv_filepath)) {
+    #     cli::cli_alert_success("'samples.csv' is available!")
+    #   }
+    #   if (file.exists(self$salib_csv_filepath)) {
+    #     cli::cli_alert_success("'salib.csv' is available!")
+    #   }
+    # },
 
     try_load_problem = function() {
       if (file.exists(self$problem_filepath)) {
-        cli::cli_alert_success("'problem.R' file exists on {self$folder} folder! Loading...")
         source(self$problem_filepath)
         self$problem <- problem
+        cli::cli_alert_success("File {basename(self$problem_filepath)} loaded.")
       } else {
-        cli::cli_alert_danger("'problem.R' file doesn't exist on {self$folder} folder! Please, specify a valid folder!")
-        stop()
+        cli::cli_alert_warning("File {basename(self$problem_filepath)} does not exist yet.")
       }
     },
 
     try_load_samples_csv = function() {
       if (file.exists(self$samples_csv_filepath)) {
         self$samples_df <- read.csv(self$samples_csv_filepath, row.names = NULL)
-        cli::cli_alert_success("Samples {self$samples_csv_filepath} loaded")
+        cli::cli_alert_success("File {basename(self$samples_csv_filepath)} loaded")
       } else {
-        cli::cli_alert_danger("File {self$samples_csv_filepath} does not exist! Please, generate samples. Aborting loading...")
-        stop()
+        cli::cli_alert_warning("File {basename(self$samples_csv_filepath)} does not exist yet.")
       }
     },
 
@@ -133,19 +131,19 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
 
     try_load_salib_csv = function() {
       if (file.exists(self$salib_csv_filepath)) {
-        self$salib_df <- read.csv(self$salib_csv_filepath)
-        message("[✔] salib.csv carregado.")
+        self$salib_df <- read.csv(self$salib_csv_filepath, row.names = NULL)
+        cli::cli_alert_success("File {basename(self$salib_csv_filepath)} loaded!")
       } else {
-        warning("[!] salib.csv não encontrado. Pulei.")
+        cli::cli_alert_warning("File {basename(self$salib_csv_filepath)} does not exist yet.")
       }
     },
 
-    try_load_summarize = function() {
-      if (file.exists(self$summarize_csv_path)) {
-        self$summarize_df <- read.csv(self$summarize_csv_path)
-        message("[✔] summarize.csv carregado.")
+    try_load_summarize_csv = function() {
+      if (file.exists(self$summarize_csv_filepath)) {
+        self$summarize_df <- read.csv(self$summarize_csv_filepath, row.names = NULL)
+        cli::cli_alert_success("File {basename(self$summarize_csv_filepath)} loaded!")
       } else {
-        warning("[!] summarize.csv não encontrado. Pulei.")
+        cli::cli_alert_warning("File {basename(self$summarize_csv_filepath)} does not exist yet.")
       }
     },
 
@@ -212,19 +210,20 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       } else {
         stop("invalid option! Available: LHS, FAST and SOBOL")
       }
-      # head(samples)
+      # print(head(samples))
+      # print(self$problem$names)
 
       self$samples_df <- as.data.frame(samples) |>
-        `colnames<-`(self$problem$names) |>
-        dplyr::mutate(id = as.integer(rownames(.))) |>
+        setNames(self$problem$names) |>
+        tibble::rownames_to_column(var = "id") |>
         dplyr::select(id, everything())
 
       # Save csv
       write.csv(self$samples_df, self$samples_csv_filepath, row.names = FALSE)
       if (overwrite) {
-        cli::cli_alert_success("File 'samples.csv' was overwriten!")
+        cli::cli_alert_success("File {basename(self$samples_csv_filepath)} was overwriten!")
       } else {
-        cli::cli_alert_success("File 'samples.csv' was created!")
+        cli::cli_alert_success("File {basename(self$samples_csv_filepath)} was created!")
       }
     },
 
