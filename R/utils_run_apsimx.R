@@ -4,6 +4,8 @@ run_apsimx <- function(
   simulations_names = NULL,
   from_config_file = NULL,
   xlsx_or_met_folder = NULL,
+  models_command = NULL,
+  multicores_cpu_count_for_command = NULL,
   dry_run = FALSE) {
 
   # Check inputs
@@ -19,13 +21,18 @@ run_apsimx <- function(
   }
 
   command <- NULL
-  if(!is.null(from_config_file)) {
-    command <- glue::glue("{CONFIG_MODELS_COMMAND} --apply {from_config_file}")
+  if (!is.null(from_config_file)) {
+    command <- glue::glue("{models_command} --apply {from_config_file}")
+  } else {
+    command <- glue::glue("{models_command} {apsimx_filepath}")
   }
-  else {
-    command <- glue::glue("{CONFIG_MODELS_COMMAND} {apsimx_filepath}")
+
+  if (is.null(multicores_cpu_count_for_command)) {
+    command <- glue::glue("{command} --single-threaded=FALSE --cpu-count=1")
+  } else {
+    command <- glue::glue("{command} --single-threaded=FALSE --cpu-count={multicores_cpu_count_for_command}")
   }
-  command <- glue::glue("{command} --single-threaded=FALSE --cpu-count={CONFIG_MULTICORES}")
+
   # If setting field names, concat names
   if (is.character(simulations_names)) {
     command <- glue::glue("{command} --simulation-names='{paste0(simulations_names, collapse = '|')}'")
@@ -53,7 +60,7 @@ run_apsimx <- function(
       return(NULL)
     },
     error = function(e) {
-      custom_error(e$message)
+      cli::cli_alert_danger(e$message)
       return(NULL)
     }
   )
@@ -72,10 +79,11 @@ run_apsimx <- function(
 
 run_apsimxs <- function(
   sims_folder,
+  models_command,
   runs_only_some_n = NULL,
   simulations_names = NULL,
   ids_to_run = NULL,
-  multicores = TRUE,
+  multicores = NULL,
   dry_run = FALSE) {
 
   # Check if simulation folder exists on sensi folder
@@ -126,14 +134,13 @@ run_apsimxs <- function(
       run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],
         simulations_names = simulations_names,
-        dry_run = dry_run
+        dry_run = dry_run,
+        models_command = models_command,
+        multicores_cpu_count_for_command = multicores
       )
     },
     multicores = multicores
   )
-
-  # Print folder stats
-  print_stats_of_folder(sims_folder)
 }
 
 generate_apsimx <- function(
@@ -175,10 +182,8 @@ generate_apsimx <- function(
 }
 
 .lapply_parallel_progressbar <- function(x_must_be_num_array, FUN, multicores = NULL) {
-  if (is.null(multicores)) {
+  if (!is.null(multicores)) {
     cli::cli_alert_success("Running in parallel with {multicores} cores")
-  } else {
-    cli::cli_alert_success("Not using parallel")
   }
 
   # Create progress bar

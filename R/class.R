@@ -1,20 +1,22 @@
 RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
   public = list(
     folder = NULL,
-    problem = NULL,
-    problem_filepath = NULL,
     sims_and_mets_folderpath = NULL,
-    samples_df = NULL,
+    problem_filepath = NULL,
     samples_csv_filepath = NULL,
-    salib_df = NULL,
     salib_csv_filepath = NULL,
-    summarize_df = NULL,
     summarize_csv_filepath = NULL,
+
+    problem = NULL,
+    samples_df = NULL,
+    salib_df = NULL,
+    summarize_df = NULL,
     multicores = NULL,
     models_command = NULL,
 
-    initialize = function(folder, copy_met_data_from = NULL, multicores = NULL, models_command = NULL) {
+    teste = NULL,
 
+    initialize = function(folder, copy_met_data_from = NULL, multicores = NULL, models_command = NULL) {
       self$folder <- normalizePath(folder, mustWork = FALSE)
       self$problem_filepath <- file.path(self$folder, "problem.rds")
       self$samples_csv_filepath <- file.path(self$folder, "samples.csv")
@@ -47,41 +49,16 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       # Create sensi folder
       if (!dir.exists(self$folder)) {
         cli::cli_alert_success("Generating {basename(self$folder)}...")
-        self$generate_folder(copy_met_data_from)
+        private$generate_folder(copy_met_data_from)
       } else {
         cli::cli_alert_success("Loading {basename(self$folder)}...")
-        self$try_load_problem()
-        self$try_load_samples_csv()
-        self$try_load_summarize_csv()
-        self$try_load_salib_csv()
+        private$try_load_problem()
+        private$try_load_samples_csv()
+        private$try_load_summarize_csv()
+        private$try_load_salib_csv()
       }
 
       self$info()
-    },
-
-    generate_folder = function(copy_met_data_from) {
-      dir.create(self$folder, recursive = TRUE, showWarnings = FALSE)
-      dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
-      cli::cli_alert_success("Folder {self$folder} was created!")
-
-      # Copy met data to "sims_and_met" folder
-      if (!is.null(copy_met_data_from)) {
-        if (!dir.exists(copy_met_data_from)) {
-          cli::cli_alert_danger("{copy_met_data_from} folder does not exist!")
-          stop()
-        } 
-        if (length(list.files(copy_met_data_from, full.names = TRUE)) == 0) {
-          cli::cli_alert_danger("{copy_met_data_from} does folder is empty! If you want to create the folder anyway, please remove the parameter 'copy_met_data_from'.")
-          stop()
-        } else {
-          file.copy(
-            list.files(copy_met_data_from, full.names = TRUE),
-            self$sims_and_mets_folderpath,
-            recursive = TRUE,
-            overwrite = TRUE
-          )
-        }
-      }
     },
 
     info = function() {
@@ -90,58 +67,25 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         cli::cli_alert_success("Parallel enabled! Multicores = {self$multicores}")
       }
       cli::cli_alert_success("ApsimX command = {self$models_command}")
-      check_file_exist_with_cli(self$problem_filepath)
-      check_file_exist_with_cli(self$samples_csv_filepath)
-      check_file_exist_with_cli(self$summarize_csv_filepath)
-      check_file_exist_with_cli(self$salib_csv_filepath)
+      private$check_file_exist_with_cli(self$problem_filepath)
+      private$check_file_exist_with_cli(self$samples_csv_filepath)
+      private$check_file_exist_with_cli(self$summarize_csv_filepath)
+      private$check_file_exist_with_cli(self$salib_csv_filepath)
 
       cli::cli_alert_info("Summary:")
       cli::cli_alert_info("  Folder = {self$folder}")
-      db_filepaths <- list.files(self$folder, pattern = '.db')
+      db_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = '.db')
       cli::cli_alert_info("  Number of dbs: {length(db_filepaths)}")
-      apsimx_filepaths <- list.files(self$folder, pattern = ".apsimx")
+      apsimx_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = ".apsimx")
       cli::cli_alert_info("  Number of apsimxs: {length(apsimx_filepaths)}")
     },
 
     import_or_overwrite_problem = function(filepath) {
-      if (check_file_exist_with_cli(filepath)) {
+      if (private$check_file_exist_with_cli(filepath)) {
         source(filepath)
         self$problem <- problem
         saveRDS(problem, self$problem_filepath)
         cli::cli_alert_success("problem was updated!")
-      }
-    },
-
-    try_load_problem = function() {
-      if (file.exists(self$problem_filepath)) {
-        self$problem <- readRDS(self$problem_filepath)
-      }
-    },
-
-    try_load_samples_csv = function() {
-      if (file.exists(self$samples_csv_filepath)) {
-        self$samples_df <- read.csv(self$samples_csv_filepath, row.names = NULL)
-      }
-    },
-
-    plot_samples_distribution = function() {
-      plt <- self$samples_df |>
-        tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") |>
-        ggplot(aes(x = seq_len(nrow(.)), y = value)) +
-          facet_wrap(variable ~ ., scale = "free_y") +
-          geom_point(size = 1)
-      plot(plt)
-    },
-
-    try_load_salib_csv = function() {
-      if (file.exists(self$salib_csv_filepath)) {
-        self$salib_df <- read.csv(self$salib_csv_filepath, row.names = NULL)
-      }
-    },
-
-    try_load_summarize_csv = function() {
-      if (file.exists(self$summarize_csv_filepath)) {
-        self$summarize_df <- read.csv(self$summarize_csv_filepath, row.names = NULL)
       }
     },
 
@@ -205,14 +149,20 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
 
       # Save csv
       write.csv(self$samples_df, self$samples_csv_filepath, row.names = FALSE)
-      cli::cli_alert_success("File {basename(self$samples_csv_filepath)} was generated!")
+      cli::cli_alert_success("File {basename(self$samples_csv_filepath)} saved!")
     },
 
     samples_df.plot = function() {
       if (is.null(self$samples_df)) {
-        stop("[✖] Nenhuma amostra carregada. Rode generate_samples() ou verifique samples.csv.")
+        cli::cli_alert_danger("Samples were not loaded! Please run generate_samples().")
       }
-      pairs(self$samples_df)
+
+      plt <- self$samples_df %>%
+        tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
+        ggplot(aes(x = seq_len(nrow(.)), y = value)) +
+        facet_wrap(variable ~ ., scale = "free_y") +
+        geom_point(size = 1)
+      plot(plt)
     },
 
     generate_apsimxs = function(sensit_base_sim_filepath, runs_only_some_n = NULL, dry_run = FALSE) {
@@ -222,10 +172,12 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         stop()
       }
 
-      if (nrow(samples_df) == 0) {
+      if (nrow(self$samples_df) == 0) {
         cli::cli_alert_success("Samples df has 0 rows. Returning...")
         return(NULL)
       }
+
+      samples_df_to_run <- self$samples_df
 
       # If necessary, filter df to run just N sims
       if (!is.null(runs_only_some_n)) {
@@ -233,25 +185,25 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
           cli::cli_alert_danger("'runs_only_some_n' must be an integer number (e.g. '5L')")
           stop()
         }
-        if (runs_only_some_n > nrow(samples_df)) {
-          cli::cli_alert_danger("runs_only_some_n parameter [{runs_only_some_n}] must be lower or equal than nrow of samples [{nrow(samples_df)}]")
+        if (runs_only_some_n > nrow(self$samples_df)) {
+          cli::cli_alert_danger("runs_only_some_n parameter [{runs_only_some_n}] must be lower or equal than nrow of samples [{nrow(self$samples_df)}]")
           stop()
         }
-        if (nrow(samples_df) > runs_only_some_n) {
-          samples_df <- samples_df[1:runs_only_some_n, ]
+        if (nrow(self$samples_df) > runs_only_some_n) {
+          samples_df_to_run <- samples_df[1:runs_only_some_n, ]
         }
       }
 
-      cli::cli_alert_success("Generating {nrow(samples_df)} samples...")
+      cli::cli_alert_success("Generating {nrow(samples_df_to_run)} samples...")
 
       res <- .lapply_parallel_progressbar(
-        x_must_be_num_array = seq_len(nrow(samples_df)),
+        x_must_be_num_array = seq_len(nrow(samples_df_to_run)),
         FUN = function(i) {
-          list_params_values <- samples_df[i, , drop = TRUE]
+          list_params_values <- samples_df_to_run[i, , drop = TRUE]
           generate_apsimx(
             list_params_values = list_params_values[2:length(list_params_values)],
             id = as.numeric(list_params_values[["id"]]),
-            folder = sims_folder,
+            folder = self$sims_and_mets_folderpath,
             sensit_base_sim_filepath = sensit_base_sim_filepath,
             dry_run = dry_run
           )
@@ -259,11 +211,22 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         multicores = self$multicores
       )
 
-      # Print folder stats
-      print_stats_of_folder(sims_folder)
+      self$info()
     },
 
-    summarize = function(ids_to_summarize = NULL, number_of_fields_to_check = NULL, runs_only_some_n = NULL, overwrite = FALSE, dry_run = FALSE) {
+    run = function(runs_only_some_n = NULL, simulations_names = NULL, ids_to_run = NULL, dry_run = FALSE) {
+      run_apsimxs(
+        sims_folder = self$sims_and_mets_folderpath,
+        runs_only_some_n = runs_only_some_n,
+        simulations_names = simulations_names,
+        ids_to_run = ids_to_run,
+        multicores = self$multicores,
+        models_command = self$models_command,
+        dry_run = dry_run
+      )
+    },
+
+    summarize = function(ids_to_summarize = NULL, number_of_fields_to_check = NULL, runs_only_some_n = NULL, dry_run = FALSE) {
 
       # Check if parameters are integer
       if (!is.null(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
@@ -276,16 +239,10 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       }
 
       # Skip summarize if "summarized.csv" already exists on folder
-      if (file.exists(summarize_csv_filepath)) {
-        if (overwrite) {
-          cli::cli_alert_warning("'summarized.csv' file already exists on {self$folder} folder! Summarize process will run because overwrite parameter was set to TRUE.")
-        } else {
-          cli::cli_alert_danger("'summarized.csv' file already exists on {self$folder} folder! Please, if you want to create new summarized csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
-          stop()
-        }
+      if (file.exists(self$summarize_csv_filepath)) {
+        cli::cli_alert_warning("{basename(self$summarize_csv_filepath)} file already exists. Overwriting...")
       } else {
-        cli::cli_alert_success("'summarized.csv' file doesn't exist. Generating...")
-        overwrite <- FALSE
+        cli::cli_alert_success("{basename(self$summarize_csv_filepath)} file doesn't exist. Generating...")
       }
 
       # List .apsimx files
@@ -317,8 +274,8 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       res <- .lapply_parallel_progressbar(
         x_must_be_num_array = seq_along(files_list),
         FUN = function(i) {
+          filepath <- files_list[i]
           if (dry_run) {
-            filepath <- files_list[i]
             cli::cli_alert_success("It will read file {filepath}")
           } else {
             sensi_summarize_harvest_db(
@@ -330,27 +287,16 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         multicores = self$multicores
       )
 
+      if (dry_run) {
+        return(NULL)
+      }
+
       # Make big df
       self$summarize_df <- dplyr::bind_rows(res)
 
       # Save csv
       write.csv(summarize_df, self$summarize_csv_filepath, row.names = FALSE)
-      if (overwrite) {
-        cli::cli_alert_success("File 'summarized.csv' was overwriten!")
-      } else {
-        cli::cli_alert_success("File 'summarized.csv' was created!")
-      }
-    },
-
-    run = function(runs_only_some_n = NULL, simulations_names = NULL, ids_to_run = NULL, dry_run = FALSE) {
-      run_apsimxs(
-        sims_folder = self$sims_and_mets_folderpath,
-        runs_only_some_n = runs_only_some_n,
-        simulations_names = simulations_names,
-        ids_to_run = ids_to_run,
-        multicores = self$multicores,
-        dry_run = dry_run
-      )
+      cli::cli_alert_success("File 'summarized.csv' saved!")
     },
 
     compute_salib_for_all_params_and_fields = function(salib_sobol = FALSE, columns_to_exclude = c("id", "field"), params = NULL, fields = NULL, fix_NAs_with_mean = FALSE, dry_run = FALSE, overwrite = FALSE) {
@@ -425,7 +371,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       }
 
       if (dry_run) {
-        return(data.frame())
+        return(NULL)
       }
 
       # rbind all combination df
@@ -441,6 +387,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       }
     }
   ),
+
   private = list(
     check_file_exist_with_cli = function(filepath) {
       if (file.exists(filepath)) {
@@ -449,6 +396,55 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       } else {
         cli::cli_alert_warning("File {basename(filepath)} does not exist!")
         return(FALSE)
+      }
+    },
+
+    try_load_problem = function() {
+      if (file.exists(self$problem_filepath)) {
+        self$problem <- readRDS(self$problem_filepath)
+      }
+    },
+
+    try_load_samples_csv = function() {
+      if (file.exists(self$samples_csv_filepath)) {
+        self$samples_df <- read.csv(self$samples_csv_filepath, row.names = NULL)
+      }
+    },
+
+    try_load_salib_csv = function() {
+      if (file.exists(self$salib_csv_filepath)) {
+        self$salib_df <- read.csv(self$salib_csv_filepath, row.names = NULL)
+      }
+    },
+
+    try_load_summarize_csv = function() {
+      if (file.exists(self$summarize_csv_filepath)) {
+        self$summarize_df <- read.csv(self$summarize_csv_filepath, row.names = NULL)
+      }
+    },
+
+    generate_folder = function(copy_met_data_from) {
+      dir.create(self$folder, recursive = TRUE, showWarnings = FALSE)
+      dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
+      cli::cli_alert_success("Folder {self$folder} was created!")
+
+      # Copy met data to "sims_and_met" folder
+      if (!is.null(copy_met_data_from)) {
+        if (!dir.exists(copy_met_data_from)) {
+          cli::cli_alert_danger("{copy_met_data_from} folder does not exist!")
+          stop()
+        } 
+        if (length(list.files(copy_met_data_from, full.names = TRUE)) == 0) {
+          cli::cli_alert_danger("{copy_met_data_from} does folder is empty! If you want to create the folder anyway, please remove the parameter 'copy_met_data_from'.")
+          stop()
+        } else {
+          file.copy(
+            list.files(copy_met_data_from, full.names = TRUE),
+            self$sims_and_mets_folderpath,
+            recursive = TRUE,
+            overwrite = TRUE
+          )
+        }
       }
     }
   )
