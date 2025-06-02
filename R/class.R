@@ -58,6 +58,8 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         private$try_load_salib_csv()
       }
 
+      private$import_met_data_to_sims_folder(copy_met_data_from)
+
       self$info()
     },
 
@@ -72,12 +74,8 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       private$check_file_exist_with_cli(self$summarize_csv_filepath)
       private$check_file_exist_with_cli(self$salib_csv_filepath)
 
-      cli::cli_alert_info("Summary:")
-      cli::cli_alert_info("  Folder = {self$folder}")
-      db_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = '.db')
-      cli::cli_alert_info("  Number of dbs: {length(db_filepaths)}")
-      apsimx_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = ".apsimx")
-      cli::cli_alert_info("  Number of apsimxs: {length(apsimx_filepaths)}")
+      # Print sims_and_mets folder summary
+      private$files_summary()
     },
 
     import_or_overwrite_problem = function(filepath) {
@@ -92,7 +90,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
     generate_samples = function(method, n_samples) {
       # Check if problem exists
       if (is.null(self$problem)) {
-        cli::cli_alert_danger("ERROR: Problem was not detected to generate samples. Please run load_problem funciton before generate samples.")
+        cli::cli_alert_danger("ERROR: Problem was not detected to generate samples. Please run import_or_overwrite_problem function before generate samples.")
         stop()
       }
 
@@ -162,7 +160,9 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         ggplot(aes(x = seq_len(nrow(.)), y = value)) +
         facet_wrap(variable ~ ., scale = "free_y") +
         geom_point(size = 1)
-      plot(plt)
+      # plot(plt)
+
+      return(plt)
     },
 
     generate_apsimxs = function(sensit_base_sim_filepath, runs_only_some_n = NULL, dry_run = FALSE) {
@@ -211,7 +211,8 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         multicores = self$multicores
       )
 
-      self$info()
+      # Print sims_and_mets folder summary
+      private$files_summary()
     },
 
     run = function(runs_only_some_n = NULL, simulations_names = NULL, ids_to_run = NULL, dry_run = FALSE) {
@@ -224,10 +225,12 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         models_command = self$models_command,
         dry_run = dry_run
       )
+
+      # Print sims_and_mets folder summary
+      private$files_summary()
     },
 
     summarize = function(ids_to_summarize = NULL, number_of_fields_to_check = NULL, runs_only_some_n = NULL, dry_run = FALSE) {
-
       # Check if parameters are integer
       if (!is.null(number_of_fields_to_check) && !is.integer(number_of_fields_to_check)) {
         cli::cli_alert_danger("'number_of_fields_to_check' must be an integer (e.g. '32L')")
@@ -248,7 +251,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       # List .apsimx files
       files_list <- list.files(
         path = self$sims_and_mets_folderpath,
-        pattern = ".db",
+        pattern = ".db$",
         full.names = TRUE
       )
 
@@ -295,7 +298,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       self$summarize_df <- dplyr::bind_rows(res)
 
       # Save csv
-      write.csv(summarize_df, self$summarize_csv_filepath, row.names = FALSE)
+      write.csv(self$summarize_df, self$summarize_csv_filepath, row.names = FALSE)
       cli::cli_alert_success("File 'summarized.csv' saved!")
     },
 
@@ -423,6 +426,25 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       }
     },
 
+    import_met_data_to_sims_folder = function(copy_met_data_from) {
+      files_met_to_copy <- list.files(copy_met_data_from, pattern = "\\.(xlsx|met)$", full.names = TRUE)
+
+      if (!dir.exists(copy_met_data_from)) {
+        cli::cli_alert_danger("{copy_met_data_from} folder does not exist!")
+        stop()
+      }
+      if (length(files_met_to_copy) == 0) {
+        cli::cli_alert_danger("{copy_met_data_from} folder is empty!")
+        stop()
+      } 
+      file.copy(
+        files_met_to_copy,
+        self$sims_and_mets_folderpath,
+        recursive = TRUE,
+        overwrite = TRUE
+      )
+    },
+
     generate_folder = function(copy_met_data_from) {
       dir.create(self$folder, recursive = TRUE, showWarnings = FALSE)
       dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
@@ -430,26 +452,21 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
 
       # Copy met data to "sims_and_met" folder
       if (!is.null(copy_met_data_from)) {
-        if (!dir.exists(copy_met_data_from)) {
-          cli::cli_alert_danger("{copy_met_data_from} folder does not exist!")
-          stop()
-        } 
-        if (length(list.files(copy_met_data_from, full.names = TRUE)) == 0) {
-          cli::cli_alert_danger("{copy_met_data_from} does folder is empty! If you want to create the folder anyway, please remove the parameter 'copy_met_data_from'.")
-          stop()
-        } else {
-          file.copy(
-            list.files(copy_met_data_from, full.names = TRUE),
-            self$sims_and_mets_folderpath,
-            recursive = TRUE,
-            overwrite = TRUE
-          )
-        }
+        self$import_met_data_to_sims_folder(copy_met_data_from)
       }
+    },
+
+    files_summary = function() {
+      cli::cli_alert_info("Summary:")
+      cli::cli_alert_info("  Folder = {self$folder}")
+      db_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = '.db$')
+      cli::cli_alert_info("  Number of dbs: {length(db_filepaths)}")
+      apsimx_filepaths <- list.files(self$sims_and_mets_folderpath, pattern = ".apsimx$")
+      cli::cli_alert_info("  Number of apsimxs: {length(apsimx_filepaths)}")
     }
   )
 )
 
-RApsimxSensitivity <- function(folder) {
-  RApsimxSensitivityClass$new(folder)
+RApsimxSensitivity <- function(folder, copy_met_data_from = NULL, multicores = NULL, models_command = NULL) {
+  RApsimxSensitivityClass$new(folder, copy_met_data_from, multicores, models_command)
 }

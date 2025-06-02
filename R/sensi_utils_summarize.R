@@ -27,6 +27,7 @@ get_id_from_filepath <- function(filepath) {
     cli::cli_alert_danger("ERROR when reading db file {basename(db_filepath)}: {e$message}")
     return(NULL)
   })
+
   return(df)
 }
 
