@@ -3,3 +3,6 @@ export(get_id_from_filepath)
 export(replace_values)
 export(run_apsimx)
 export(run_apsimxs)
+export(RApsimxSensitivity)
+
+importFrom(magrittr, `%>%`)

@@ -1,4 +1,9 @@
-RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
+
+RApsimxSensitivity <- function(folder, copy_met_data_from = NULL, multicores = NULL, models_command = NULL) {
+  RApsimxSensitivityClass$new(folder, copy_met_data_from, multicores, models_command)
+}
+
+RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
   public = list(
     folder = NULL,
     sims_and_mets_folderpath = NULL,
@@ -49,7 +54,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       # Create sensi folder
       if (!dir.exists(self$folder)) {
         cli::cli_alert_success("Generating {basename(self$folder)}...")
-        private$generate_folder(copy_met_data_from)
+        private$generate_folder()
       } else {
         cli::cli_alert_success("Loading {basename(self$folder)}...")
         private$try_load_problem()
@@ -58,7 +63,11 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         private$try_load_salib_csv()
       }
 
-      private$import_met_data_to_sims_folder(copy_met_data_from)
+      # Copy met data to "sims_and_met" folder
+      if (!is.null(copy_met_data_from)) {
+        private$import_met_data_to_sims_folder(copy_met_data_from)
+      }
+
 
       self$info()
     },
@@ -157,10 +166,9 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
 
       plt <- self$samples_df %>%
         tidyr::pivot_longer(cols = -id, names_to = "variable", values_to = "value") %>%
-        ggplot(aes(x = seq_len(nrow(.)), y = value)) +
-        facet_wrap(variable ~ ., scale = "free_y") +
-        geom_point(size = 1)
-      # plot(plt)
+        ggplot2::ggplot(ggplot2::aes(x = seq_len(nrow(.)), y = value)) +
+          ggplot2::facet_wrap(variable ~ ., scale = "free_y") +
+          ggplot2::geom_point(size = 1)
 
       return(plt)
     },
@@ -434,9 +442,9 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
         stop()
       }
       if (length(files_met_to_copy) == 0) {
-        cli::cli_alert_danger("{copy_met_data_from} folder is empty!")
+        cli::cli_alert_danger("{copy_met_data_from} don't have any xlsx or met file!")
         stop()
-      } 
+      }
       file.copy(
         files_met_to_copy,
         self$sims_and_mets_folderpath,
@@ -445,15 +453,10 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
       )
     },
 
-    generate_folder = function(copy_met_data_from) {
+    generate_folder = function() {
       dir.create(self$folder, recursive = TRUE, showWarnings = FALSE)
       dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
       cli::cli_alert_success("Folder {self$folder} was created!")
-
-      # Copy met data to "sims_and_met" folder
-      if (!is.null(copy_met_data_from)) {
-        self$import_met_data_to_sims_folder(copy_met_data_from)
-      }
     },
 
     files_summary = function() {
@@ -466,7 +469,3 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivity",
     }
   )
 )
-
-RApsimxSensitivity <- function(folder, copy_met_data_from = NULL, multicores = NULL, models_command = NULL) {
-  RApsimxSensitivityClass$new(folder, copy_met_data_from, multicores, models_command)
-}

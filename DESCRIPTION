@@ -20,6 +20,8 @@ Imports:
     reticulate,
     lhs,
     glue,
-    cli
+    cli,
+    RSQLite,
+    tidyr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
