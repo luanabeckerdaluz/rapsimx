@@ -3,13 +3,29 @@
 ## Create conda env
 
 ```bash
-conda create -c conda-forge -n rapsimx python=3.11 ipykernel numpy pandas salib r-base=4.4 r-devtools r-tidyverse r-irkernel
+conda create -c conda-forge -n rapsimx python=3.11 ipykernel salib r-base=4.4 r-devtools r-tidyverse r-irkernel
 # rapsimx dependencies:
 conda activate rapsimx
-conda install -c conda-forge r-reticulate r-xml2 r-rjson r-future r-reticulate r-future.apply
-Rscript -e "install.packages(c('apsimx','rapsimng','future.apply'), repos = 'https://cloud.r-project.org')"
+conda install -c conda-forge r-reticulate r-xml2 r-rjson r-future r-future.apply r-lhs
+Rscript -e "install.packages(c('apsimx','rapsimng'), repos = 'https://cloud.r-project.org')"
 python3 -m ipykernel install --name rapsimx --prefix=$CONDA_PREFIX --display=rapsimx
 Rscript -e "options(warn=2); IRkernel::installspec( user = FALSE, prefix = '$CONDA_PREFIX', displayname = 'rapsimx')"
+```
+
+## Install APSIMx
+
+```bash
+curl --output apsim.deb https://builds.apsim.info/api/nextgen/download/7770/Linux
+mkdir -p /home/jovyan/meuapsimx/
+dpkg-deb -x apsim.deb /home/jovyan/meuapsimx/
+# Install dotnet
+wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+chmod +x ./dotnet-install.sh
+./dotnet-install.sh --version latest
+# Test if dotnet is installed
+$HOME/.dotnet/dotnet --info
+# Test apsimx Models
+$HOME/.dotnet/dotnet $HOME/meuapsimx/usr/local/lib/apsim/2025.6.7770.0/bin/Models.dll -V
 ```
 
 ## What we learned

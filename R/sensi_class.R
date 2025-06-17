@@ -122,8 +122,8 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       if (method == "LHS") {
         convert_row_to_var_bounds <- function(row) {
           for (i in seq_len(length(row))) {
-            lb <- variable_bounds[[i]][1]
-            ub <- variable_bounds[[i]][2]
+            lb <- self$problem$bounds[[i]][1]
+            ub <- self$problem$bounds[[i]][2]
             range <- ub - lb
             row[i] <- lb + row[i] * range
           }
@@ -198,7 +198,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
           stop()
         }
         if (nrow(self$samples_df) > runs_only_some_n) {
-          samples_df_to_run <- samples_df[1:runs_only_some_n, ]
+          samples_df_to_run <- self$samples_df[1:runs_only_some_n, ]
         }
       }
 

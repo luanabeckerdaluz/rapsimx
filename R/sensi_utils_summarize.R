@@ -54,7 +54,7 @@ sensi_summarize_harvest_db <- function(db_filepath, number_of_fields_to_check = 
   # ID   Name   FolderName
   df_db_simulations <- .read_db_table(db_filepath, "_Simulations") |>
     dplyr::select(-FolderName) |>
-    dplyr::rename(SimulationID = ID)
+    dplyr::rename(SimulationID = "ID")
   # print(head(df_db_simulations))
 
   # print(head(df_db_harvest_report))
