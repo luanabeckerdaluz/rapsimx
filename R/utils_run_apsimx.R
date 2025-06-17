@@ -71,7 +71,7 @@ run_apsimx <- function(
 
   if (read_output) {
     db_filepath <- sub("\\.apsimx$", ".db", apsimx_filepath)
-    return(sensi_summarize_harvest_db(db_filepath))
+    return(rapsimx::sensi_summarize_harvest_db(db_filepath))
   } else {
     return(NULL)
   }
@@ -128,10 +128,10 @@ run_apsimxs <- function(
 
   cli::cli_alert_success("Running {length(apsimx_filepaths)} apsimx simulations...")
 
-  res <- .lapply_parallel_progressbar(
+  res <- rapsimx::.lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
-      run_apsimx(
+      rapsimx::run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],
         simulations_names = simulations_names,
         dry_run = dry_run,
@@ -204,9 +204,14 @@ generate_apsimx <- function(
 
   # Configure parallel or sequential
   if (!is.null(multicores)) {
+    # Set parallel cluster
     cl <- parallel::makeCluster(multicores)
     future::plan(future::cluster, workers = cl)
+    # Set future seed true
+    lapply_arguments$future.seed <- TRUE
+    # Run parallel lapply
     res <- do.call(future.apply::future_lapply, lapply_arguments)
+    # Stop parallel cluster
     parallel::stopCluster(cl)
   } else {
     # future::plan(future::sequential)

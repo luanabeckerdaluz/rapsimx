@@ -20,9 +20,9 @@
   return(df)
 }
 
-.salib_for_one_field_and_param <- function(
-  field,
+salib_for_one_field_and_param <- function(
   df,
+  field,
   param,
   number_of_simulations,
   problem,
@@ -41,8 +41,9 @@
   }
 
   arr <- df |>
-    filter(field == !!field) |>
-    pull(!!param)
+    dplyr::filter(field == !!field) %>%
+    dplyr::pull(!!param)
+  print("POSSIVEL1")
 
   if (number_of_simulations < length(arr)) {
     cli::cli_alert_danger("field={field} param={param} -> number_of_simulations [{number_of_simulations}] is less than summarized array length for this field [{length(arr)}]")
@@ -52,31 +53,36 @@
     cli::cli_alert_warning("field={field} param={param} -> number_of_simulations [{number_of_simulations}] is greater than array length [{length(arr)}]. Filling with {number_of_NAs_to_fill} NAs...")
     arr <- c(arr, rep(NA, number_of_NAs_to_fill))
   }
+  print("POSSIVEL2")
 
   if (fix_NAs_with_mean) {
     arr[is.null(arr)] <- mean(arr, na.rm = TRUE)
   }
+  print("POSSIVEL3")
 
-  np <- import("numpy")
-  analyze <- import("SALib.analyze.fast")
+  np <- reticulate::import("numpy")
+  analyze <- reticulate::import("SALib.analyze.fast")
   if (salib_sobol) {
-    analyze <- import("SALib.analyze.sobol")
+    analyze <- reticulate::import("SALib.analyze.sobol")
   }
+  print("POSSIVEL4")
 
   np_arr <- np$array(arr)
   si_df <- NA
   if (salib_sobol) {
     Si <- analyze$analyze(problem, np_arr, calc_second_order = TRUE)
-    si_df <- .si_to_df_sobol(Si, problem$names)
+    si_df <- rapsimx::.si_to_df_sobol(Si, problem$names)
   } else {
     Si <- analyze$analyze(problem, np_arr)
-    si_df <- .si_to_df(Si)
+    si_df <- rapsimx::.si_to_df(Si)
   }
+  print("POSSIVEL5")
 
   si_df <- si_df |>
-    mutate(field = !!field) |>
-    mutate(param = !!param) |>
-    select(field, param, everything())
+    dplyr::mutate(field = !!field) %>%
+    dplyr::mutate(param = !!param) %>%
+    dplyr::select(field, param, dplyr::everything())
+  print("POSSIVEL5")
 
   return(si_df)
 }

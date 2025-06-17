@@ -204,11 +204,11 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
 
       cli::cli_alert_success("Generating {nrow(samples_df_to_run)} samples...")
 
-      res <- .lapply_parallel_progressbar(
+      res <- rapsimx::.lapply_parallel_progressbar(
         x_must_be_num_array = seq_len(nrow(samples_df_to_run)),
         FUN = function(i) {
           list_params_values <- samples_df_to_run[i, , drop = TRUE]
-          generate_apsimx(
+          rapsimx::generate_apsimx(
             list_params_values = list_params_values[2:length(list_params_values)],
             id = as.numeric(list_params_values[["id"]]),
             folder = self$sims_and_mets_folderpath,
@@ -224,7 +224,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
     },
 
     run = function(runs_only_some_n = NULL, simulations_names = NULL, ids_to_run = NULL, dry_run = FALSE) {
-      run_apsimxs(
+      rapsimx::run_apsimxs(
         sims_folder = self$sims_and_mets_folderpath,
         runs_only_some_n = runs_only_some_n,
         simulations_names = simulations_names,
@@ -282,14 +282,14 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         }
       }
 
-      res <- .lapply_parallel_progressbar(
+      res <- rapsimx::.lapply_parallel_progressbar(
         x_must_be_num_array = seq_along(files_list),
         FUN = function(i) {
           filepath <- files_list[i]
           if (dry_run) {
             cli::cli_alert_success("It will read file {filepath}")
           } else {
-            sensi_summarize_harvest_db(
+            rapsimx::sensi_summarize_harvest_db(
               db_filepath = filepath,
               number_of_fields_to_check = number_of_fields_to_check
             )
@@ -310,7 +310,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       cli::cli_alert_success("File 'summarized.csv' saved!")
     },
 
-    compute_salib_for_all_params_and_fields = function(salib_sobol = FALSE, columns_to_exclude = c("id", "field"), params = NULL, fields = NULL, fix_NAs_with_mean = FALSE, dry_run = FALSE, overwrite = FALSE) {
+    compute_salib_for_all_params_and_fields = function(field_column_name, salib_sobol = FALSE, columns_to_exclude = c("id", "field"), fix_NAs_with_mean = FALSE, dry_run = FALSE, overwrite = FALSE) {
 
       # Check if salib.csv already exists
       salib_csv_filepath <- file.path(self$folder, "salib.csv")
@@ -326,75 +326,56 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         overwrite <- FALSE
       }
 
-      # Print parallel status
-      if (!is.null(self$multicores)) {
-        cli::cli_alert_success("Running in parallel with {self$multicores} cores")
-      } else {
-        cli::cli_alert_success("Not using parallel")
-      }
-
       # Get number of simulations (samples nrow)
-      number_of_simulations <- nrow(self$df_samples)
+      number_of_simulations <- nrow(self$samples_df)
 
-      # Get only params to compute salib
-      if (anyNULL(params)) {
-        params <- colnames(df)[!colnames(df) %in% columns_to_exclude]
-      }
+      # Select some columns to compute salib
+      columns_to_include <- colnames(self$summarize_df)[!colnames(self$summarize_df) %in% columns_to_exclude]
 
       # Get fields
-      if (anyNULL(fields)) {
-        fields <- unique(df$field)
-      }
+      fields <- unique(self$summarize_df[[field_column_name]])
 
-      # Generate all combinations of fields and params
-      all_combinations <- expand.grid(fields, params)
-      # print(all_combinations)
+      # Generate all combinations of fields and columns_to_include
+      all_combinations <- expand.grid(fields, columns_to_include)
 
-      # For each combination of fields and params, compute SALib
-
-      apply_parameters <- list(
-        X = all_combinations,
-        MARGIN = 1,
-        future.seed = TRUE,
-        FUN = function(x) {
-          field <- x[1]
-          param <- x[2]
-          .salib_for_one_field_and_param(
-            df = df,
-            field = field,
-            param = param,
-            number_of_simulations = number_of_simulations,
-            problem = self$problem,
-            salib_sobol = salib_sobol,
-            fix_NAs_with_mean = fix_NAs_with_mean,
-            dry_run = dry_run
-          )
-        }
+      # Compute salib for each combination field and columns_to_include
+      res <- rapsimx::.lapply_parallel_progressbar(
+        x_must_be_num_array = seq_len(nrow(all_combinations)),
+        FUN = function(i) {
+          field <- all_combinations[i, 1]
+          param <- all_combinations[i, 2]
+          if (dry_run) {
+            cli::cli_alert_success("It will Compute salib with field={field} and param={param}")
+          } else {
+            rapsimx::salib_for_one_field_and_param(
+              df = self$summarize_df,
+              field = field,
+              param = param,
+              number_of_simulations = number_of_simulations,
+              problem = self$problem,
+              salib_sobol = salib_sobol,
+              fix_NAs_with_mean = fix_NAs_with_mean,
+              dry_run = dry_run
+            )
+          }
+        },
+        multicores = self$multicores
       )
-
-      if (!is.null(self$multicores)) {
-        cl <- parallel::makeCluster(self$multicores)
-        future::plan(future::cluster, workers = cl)
-        list_dfs_salibs <- do.call(future.apply::future_apply, apply_parameters)
-        parallel::stopCluster(cl)
-      } else {
-        list_dfs_salibs <- do.call(apply, apply_parameters)
-      }
 
       if (dry_run) {
         return(NULL)
       }
 
       # rbind all combination df
-      rbind_salibs <- Reduce(function(x, y) rbind(x, y, all = TRUE), list_dfs_salibs) |>
-        filter(param != TRUE, field != TRUE)
+      rbind_salibs <- dplyr::bind_rows(res) %>%
+        dplyr::filter(param != TRUE, field != TRUE)
 
       # Save csv
       write.csv(rbind_salibs, self$salib_csv_filepath, row.names = FALSE)
       if (overwrite) {
-        cli::cli_alert_success("File 'salib.csv' was overwriten!")
+        cli::cli_alert_success("File {basename(self$salib_csv_filepath)} was overwriten!")
       } else {
-        cli::cli_alert_success("File 'salib.csv' was created!")
+        cli::cli_alert_success("File {basename(self$salib_csv_filepath)} was created!")
       }
     }
   ),

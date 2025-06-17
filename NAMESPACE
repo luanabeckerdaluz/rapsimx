@@ -1,8 +1,11 @@
+export(RApsimxSensitivity)
 export(generate_apsimx)
 export(get_id_from_filepath)
 export(replace_values)
 export(run_apsimx)
 export(run_apsimxs)
-export(RApsimxSensitivity)
+export(read_db_table)
+export(list_db_tables)
+export(salib_for_one_field_and_param)
 
 importFrom(magrittr, `%>%`)

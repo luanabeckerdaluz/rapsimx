@@ -5,13 +5,13 @@ get_id_from_filepath <- function(filepath) {
   return(id)
 }
 
-.list_db_tables <- function(db_filepath) {
+list_db_tables <- function(db_filepath) {
   conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
   print(RSQLite::dbListTables(conn))
   RSQLite::dbDisconnect(conn)
 }
 
-.read_db_table <- function(db_filepath, table) {
+read_db_table <- function(db_filepath, table) {
   # Connects to db
   conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
   # Ensure that db connection will be closed later
@@ -42,24 +42,24 @@ sensi_summarize_harvest_db <- function(db_filepath, number_of_fields_to_check = 
     stop()
   }
 
-  # .list_db_tables(db_filepath)
+  # rapsimx::.list_db_tables(db_filepath)
 
   # CheckpointID   SimulationID   Zone   Clock.Today...
-  df_db_harvest_report <- .read_db_table(db_filepath, "HarvestReport")
+  df_db_harvest_report <- rapsimx::read_db_table(db_filepath, "HarvestReport")
   if (is.null(df_db_harvest_report)) {
     return(NULL)
   }
   # print(head(df_db_harvest_report))
 
   # ID   Name   FolderName
-  df_db_simulations <- .read_db_table(db_filepath, "_Simulations") |>
+  df_db_simulations <- rapsimx::read_db_table(db_filepath, "_Simulations") |>
     dplyr::select(-FolderName) |>
     dplyr::rename(SimulationID = "ID")
   # print(head(df_db_simulations))
 
   # print(head(df_db_harvest_report))
   # print(head(df_db_harvest_report))
-  # print(head(.read_db_table(db_filepath, "_Simulations")))
+  # print(head(rapsimx::read_db_table(db_filepath, "_Simulations")))
 
   summarized_df <- df_db_harvest_report |>
     merge(df_db_simulations, by = "SimulationID") # |>
@@ -80,7 +80,7 @@ sensi_summarize_harvest_db <- function(db_filepath, number_of_fields_to_check = 
 
   rownames(summarized_df) <- NULL
 
-  sim_id <- get_id_from_filepath(db_filepath)
+  sim_id <- rapsimx::get_id_from_filepath(db_filepath)
   if (!is.null(sim_id)) {
     summarized_df <- summarized_df |>
       dplyr::mutate(id = sim_id) |>
