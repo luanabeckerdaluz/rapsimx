@@ -150,7 +150,7 @@ run_apsimx <- function(
 
   # Remove .db file if it already exists
   if (file.exists(db_filepath)) {
-    file.delete(db_filepath)
+    file.remove(db_filepath)
     if (verbose) cli::cli_alert_success("run_apsimx | {db_filepath} exists! So, deleting...")
   }
 
