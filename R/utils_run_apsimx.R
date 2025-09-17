@@ -37,14 +37,12 @@ rapsimx_wrapper_options <- function(
   return(options)
 }
 
-
-
-
 rapsimx_wrapper <- function(
   model_options,
-  sit_names = NA,
-  param_values = NA,
-  multicores = NA) {
+  sit_names = NULL,
+  param_values = NULL,
+  verbose = FALSE,
+  multicores = NULL) {
 
   # Fetch inputs
   apsimx_path <- model_options$apsimx_path
@@ -61,7 +59,8 @@ rapsimx_wrapper <- function(
     list_params_values = param_values,
     id = paste0(sample(c(letters, LETTERS, 0:9), 6, replace = TRUE), collapse = ""),
     folder = tempdir(),
-    sensit_base_sim_filepath = apsimx_file
+    sensit_base_sim_filepath = apsimx_file,
+    verbose = verbose
   )
 
   run_apsimx(
@@ -70,17 +69,19 @@ rapsimx_wrapper <- function(
     simulations_names = sit_names,
     xlsx_or_met_folder = met_files_path,
     models_command = apsimx_path,
-    multicores_cpu_count_for_command = multicores
+    multicores_cpu_count_for_command = multicores,
+    verbose = verbose
   )
 
   #
   # Read results
   #
-  db_filepath <- gsub('.apsimx', '.db', apsimx_file)
+  db_filepath <- gsub(".apsimx", ".db", apsimx_file)
   res$db_file_name = db_filepath
   res$sim_list <- rapsimx::read_db_table(
     db_filepath = db_filepath,
-    table_name = model_options$predicted_table_name
+    table_name = model_options$predicted_table_name,
+    verbose = verbose
     # model_options$variable_names
   )
 
@@ -96,12 +97,13 @@ rapsimx_wrapper <- function(
   #   Add the attribute cropr_simulation for using CroPlotR package
   #
   if (length(res$sim_list) > 0) {
-    attr(res$sim_list, "class") = "cropr_simulation"
+    attr(res$sim_list, "class") <- "cropr_simulation"
   }
+
+  if (verbose) cli::cli_alert_success("Returning res object {res}")
 
   return(res)
 }
-
 
 run_apsimx <- function(
   apsimx_filepath,
@@ -111,6 +113,7 @@ run_apsimx <- function(
   xlsx_or_met_folder = NULL,
   models_command = NULL,
   multicores_cpu_count_for_command = NULL,
+  verbose = FALSE,
   dry_run = FALSE) {
 
   # Check inputs
@@ -138,14 +141,17 @@ run_apsimx <- function(
   if (!is.null(xlsx_or_met_folder)) {
     files_to_copy <- list.files(xlsx_or_met_folder, pattern = "\\.(xlsx|met)$", full.names = TRUE)
     file.copy(files_to_copy, dirname(apsimx_filepath), overwrite = TRUE)
+    if (verbose) cli::cli_alert_success("run_apsimx | Copied xlsx|met from folder {xlsx_or_met_folder} to folder {apsimx_filepath}")
   }
 
   # Set .db filename
   db_filepath <- sub("\\.apsimx$", ".db", apsimx_filepath)
+  if (verbose) cli::cli_alert_success("run_apsimx | db_filepath = {db_filepath}")
 
   # Remove .db file if it already exists
   if (file.exists(db_filepath)) {
     file.delete(db_filepath)
+    if (verbose) cli::cli_alert_success("run_apsimx | {db_filepath} exists! So, deleting...")
   }
 
   command <- glue::glue("{models_command} {apsimx_filepath} --single-threaded=FALSE --cpu-count={multicores_cpu_count_for_command}")
@@ -153,10 +159,12 @@ run_apsimx <- function(
   # If setting field names, concat names
   if (is.character(simulations_names)) {
     command <- glue::glue("{command} --simulation-names='{paste0(simulations_names, collapse = '|')}'")
+    if (verbose) cli::cli_alert_success("run_apsimx | Added simulations_names")
   }
   # If using conf file, use --apply
   if (!is.null(from_config_file)) {
     command <- glue::glue("{command} --apply {from_config_file}")
+    if (verbose) cli::cli_alert_success("run_apsimx | Added --apply to command")
   }
 
   # command <- (
@@ -167,9 +175,9 @@ run_apsimx <- function(
 
   # Fake running file
   if (dry_run) {
-    cli::cli_alert_success("It will run command '{command}'")
     return(NULL)
   }
+  if (verbose) cli::cli_alert_success("run_apsimx | It will run command '{command}'")
 
   # Run CMD
   result <- NULL
@@ -180,6 +188,7 @@ run_apsimx <- function(
       error   = function(e) { cli::cli_alert_danger(e$message); NULL }
     )
   })
+  if (verbose) cli::cli_alert_success("run_apsimx | command was executed!")
 
   if (is.null(result)) {
     cli::cli_alert_danger("ERROR while running simulation!")
@@ -187,10 +196,11 @@ run_apsimx <- function(
   }
 
   if (read_output) {
+    if (verbose) cli::cli_alert_success("run_apsimx | Reading output...")
     return(rapsimx::sensi_summarize_harvest_db(db_filepath))
-  } else {
-    return(NULL)
   }
+
+  return(TRUE)
 }
 
 run_apsimxs <- function(
@@ -200,6 +210,7 @@ run_apsimxs <- function(
   simulations_names = NULL,
   ids_to_run = NULL,
   multicores = NULL,
+  verbose = FALSE,
   dry_run = FALSE) {
 
   # Check if simulation folder exists on sensi folder
@@ -217,6 +228,7 @@ run_apsimxs <- function(
 
   # If ids_to_run is defined, summarize just for these ids
   if (is.numeric(ids_to_run)) {
+    if (verbose) cli::cli_alert_success("run_apsimxs | Setting multiple ids")
     apsimx_filepaths <- apsimx_filepaths[grepl(
       paste(glue::glue("simulation{ids_to_run}.apsimx"), collapse = "|"),
       apsimx_filepaths
@@ -264,6 +276,7 @@ generate_apsimx <- function(
   id,
   folder,
   sensit_base_sim_filepath,
+  verbose = FALSE,
   dry_run = FALSE) {
 
   # Check if base sim exists
@@ -273,6 +286,7 @@ generate_apsimx <- function(
 
   # Copy base simulation to tmp folder
   filepath_sim <- file.path(folder, glue::glue("simulation{id}.apsimx"))
+  if (verbose) cli::cli_alert_success("generate_apsim | filepath_sim = {filepath_sim}")
 
   # If dry_run, print and return
   if (dry_run) {
@@ -286,6 +300,7 @@ generate_apsimx <- function(
     filepath_sim,
     overwrite = TRUE
   )
+  if (verbose) cli::cli_alert_success("generate_apsim | copied {sensit_base_sim_filepath} to {filepath_sim}")
 
   # Replace parameters
   rapsimx::replace_values(
@@ -293,6 +308,7 @@ generate_apsimx <- function(
     VERBOSE = FALSE,
     list_params_values = list_params_values
   )
+  if (verbose) cli::cli_alert_success("generate_apsim | replaced values")
 
   return(filepath_sim)
 }

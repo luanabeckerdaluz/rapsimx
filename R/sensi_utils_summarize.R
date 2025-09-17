@@ -11,8 +11,11 @@ list_db_tables <- function(db_filepath) {
   RSQLite::dbDisconnect(conn)
 }
 
-read_db_table <- function(db_filepath, table) {
+read_db_table <- function(db_filepath, table, verbose = FALSE) {
   # table_name = [CheckpointID   SimulationID   Zone   Clock.Today...]
+
+  if (verbose) cli::cli_alert_success("read_db_table | Input db_filepath = {db_filepath}")
+  if (verbose) cli::cli_alert_success("read_db_table | Input table = {table}")
 
   # Handle input errors
   if (!file.exists(db_filepath)) {
@@ -24,17 +27,14 @@ read_db_table <- function(db_filepath, table) {
   conn <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_filepath)
   # Ensure that db connection will be closed later
   on.exit(RSQLite::dbDisconnect(conn), add = TRUE)
+  if (verbose) cli::cli_alert_success("read_db_table | Connected to DB!")
 
-  df <- tryCatch({
-    hr <- RSQLite::dbReadTable(conn, table)
-    return(hr)
-  }, warning = function(w) {
-    cli::cli_alert_warning("WARNING: when reading db file {basename(db_filepath)}: {w$message}")
-    return(NULL)
-  }, error = function(e) {
-    cli::cli_alert_danger("ERROR when reading db file {basename(db_filepath)}: {e$message}")
-    return(NULL)
-  })
+  df <- tryCatch(
+    RSQLite::dbReadTable(conn, table),
+    warning = function(w) { cli::cli_alert_warning("WARNING: when reading db file {basename(db_filepath)}: {w$message}"); NULL },
+    error = function(e) { cli::cli_alert_danger("ERROR when reading db file {basename(db_filepath)}: {e$message}"); NULL }
+  )
+  if (verbose) cli::cli_alert_success("read_db_table | Reading table...")
 
   # # 
   # # TODO: Filter variables

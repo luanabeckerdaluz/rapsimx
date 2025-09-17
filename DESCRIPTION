@@ -1,6 +1,6 @@
 Package: rapsimx
 Title: R package to run Apsim Next Generation
-Version: 0.2.1
+Version: 0.2.4
 Authors@R: 
     person(given = "Luana",
            family = "Becker da Luz",
