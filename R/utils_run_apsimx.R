@@ -48,7 +48,7 @@ rapsimx_wrapper <- function(
   apsimx_path <- model_options$apsimx_path
   apsimx_file <- model_options$apsimx_file
   # variable_names <- model_options$variable_names
-  # predicted_table_name <- model_options$predicted_table_name
+  predicted_table_name <- model_options$predicted_table_name
   # observed_table_name <- model_options$observed_table_name
   met_files_path <- model_options$met_files_path
   # obs_files_path <- model_options$obs_files_path
@@ -66,7 +66,7 @@ rapsimx_wrapper <- function(
     verbose = verbose
   )
 
-  run_apsimx(
+  ret <- run_apsimx(
     apsimx_filepath = apsimx_filepath,
     read_output = FALSE,
     simulations_names = sit_names,
@@ -75,15 +75,17 @@ rapsimx_wrapper <- function(
     multicores_cpu_count_for_command = multicores,
     verbose = verbose
   )
+  cli::cli_alert_success("run_apsimx function returned object class {class(ret)}!")
 
   #
   # Read results
   #
+  res <- NULL
   db_filepath <- gsub(".apsimx", ".db", apsimx_file)
-  res$db_file_name = db_filepath
+  res$db_file_name <- db_filepath
   res$sim_list <- rapsimx::read_db_table(
     db_filepath = db_filepath,
-    table_name = model_options$predicted_table_name,
+    table_name = predicted_table_name,
     verbose = verbose
     # model_options$variable_names
   )
