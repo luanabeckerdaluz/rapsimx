@@ -55,16 +55,19 @@ rapsimx_wrapper <- function(
 
   start_time <- Sys.time()
 
-  generate_apsimx(
+  tmp_dir <- tempdir()
+  if (verbose) cli::cli_alert_success("rapsimx_wrapper | Creating tmp dir {tmp_dir}")
+
+  apsimx_filepath <- generate_apsimx(
     list_params_values = param_values,
     id = paste0(sample(c(letters, LETTERS, 0:9), 6, replace = TRUE), collapse = ""),
-    folder = tempdir(),
+    folder = tmp_dir,
     sensit_base_sim_filepath = apsimx_file,
     verbose = verbose
   )
 
   run_apsimx(
-    apsimx_filepath = apsimx_file,
+    apsimx_filepath = apsimx_filepath,
     read_output = FALSE,
     simulations_names = sit_names,
     xlsx_or_met_folder = met_files_path,
@@ -141,7 +144,7 @@ run_apsimx <- function(
   if (!is.null(xlsx_or_met_folder)) {
     files_to_copy <- list.files(xlsx_or_met_folder, pattern = "\\.(xlsx|met)$", full.names = TRUE)
     file.copy(files_to_copy, dirname(apsimx_filepath), overwrite = TRUE)
-    if (verbose) cli::cli_alert_success("run_apsimx | Copied xlsx|met from folder {xlsx_or_met_folder} to folder {apsimx_filepath}")
+    if (verbose) cli::cli_alert_success("run_apsimx | Copied xlsx|met from folder {xlsx_or_met_folder} to folder {dirname(apsimx_filepath)}")
   }
 
   # Set .db filename
