@@ -31,12 +31,12 @@ read_db_table <- function(db_filepath, table_name, verbose = FALSE) {
 
   res_read <- tryCatch(
     RSQLite::dbReadTable(conn, table_name),
-    warning = function(w) { cli::cli_alert_warning("WARNING: when reading db file {basename(db_filepath)}: {w$message}"); NULL },
-    error = function(e) { cli::cli_alert_danger("ERROR when reading db file {basename(db_filepath)}: {e$message}"); NULL }
+    warning = function(w) { cli::cli_alert_warning("WARNING: when reading db file {db_filepath}: {w$message}"); NULL },
+    error = function(e) { cli::cli_alert_danger("ERROR when reading db file {db_filepath}: {e$message}"); NULL }
   )
 
   if (is.null(res_read)) {
-    cli::cli_alert_danger("read_db_table | Error while reading table {table_name}!")
+    cli::cli_alert_danger("read_db_table | Error while reading table '{table_name}'!")
     stop()
   } else {
     cli::cli_alert_success("read_db_table | Table {table_name} was read!")
@@ -75,7 +75,7 @@ read_db_table <- function(db_filepath, table_name, verbose = FALSE) {
   # }
   # names(tables) <- simulationNames
 
-  return(df)
+  return(res_read)
 }
 
 sensi_summarize_harvest_db <- function(db_filepath, number_of_fields_to_check = NULL) {

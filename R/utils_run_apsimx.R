@@ -58,7 +58,7 @@ rapsimx_wrapper <- function(
   tmp_dir <- tempdir()
   if (verbose) cli::cli_alert_success("rapsimx_wrapper | Creating tmp dir {tmp_dir}")
 
-  apsimx_filepath <- generate_apsimx(
+  new_apsimx_filepath <- generate_apsimx(
     list_params_values = param_values,
     id = paste0(sample(c(letters, LETTERS, 0:9), 6, replace = TRUE), collapse = ""),
     folder = tmp_dir,
@@ -67,7 +67,7 @@ rapsimx_wrapper <- function(
   )
 
   ret <- run_apsimx(
-    apsimx_filepath = apsimx_filepath,
+    apsimx_filepath = new_apsimx_filepath,
     read_output = FALSE,
     simulations_names = sit_names,
     xlsx_or_met_folder = met_files_path,
@@ -81,7 +81,7 @@ rapsimx_wrapper <- function(
   # Read results
   #
   res <- NULL
-  db_filepath <- gsub(".apsimx", ".db", apsimx_file)
+  db_filepath <- gsub(".apsimx", ".db", new_apsimx_filepath)
   res$db_file_name <- db_filepath
   res$sim_list <- rapsimx::read_db_table(
     db_filepath = db_filepath,
@@ -105,7 +105,7 @@ rapsimx_wrapper <- function(
     attr(res$sim_list, "class") <- "cropr_simulation"
   }
 
-  if (verbose) cli::cli_alert_success("Returning res object {res}")
+  if (verbose) cli::cli_alert_success("Returning res object class {class(res)}")
 
   return(res)
 }
