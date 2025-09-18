@@ -6,6 +6,7 @@ rapsimx_wrapper_options <- function(
   observed_table_name = 'Observed',
   met_files_path = character(0),
   obs_files_path = character(0),
+  verbose = FALSE,
   ...) {
 
   #
@@ -19,6 +20,7 @@ rapsimx_wrapper_options <- function(
   options$observed_table_name <- observed_table_name
   options$met_files_path <- met_files_path
   options$obs_files_path <- obs_files_path
+  options$verbose <- verbose
 
   #
   # Legacy Options from apsimx_wrapper_options
@@ -52,6 +54,9 @@ rapsimx_wrapper <- function(
   # observed_table_name <- model_options$observed_table_name
   met_files_path <- model_options$met_files_path
   # obs_files_path <- model_options$obs_files_path
+
+  # Consider also verbose from model_options
+  verbose <- verbose | model_options$verbose
 
   start_time <- Sys.time()
 
