@@ -47,7 +47,16 @@ rapsimx_wrapper <- function(
   multicores = NULL,
   ...) {
 
-  cli::cli_alert_danger("Entrou1 com {model_options$verbose}")
+  if (verbose) {
+    cli::cli_alert_warning("rapsimx_wrapper | sit_names = {sit_names}")
+    cli::cli_alert_warning("rapsimx_wrapper | param_values = {param_values}")
+    dots <- list(...)
+    if (length(dots) > 0) {
+      for (nm in names(dots)) {
+        cli::cli_alert_warning("rapsimx_wrapper | ... {nm} = {dots[[nm]]}")
+      }
+    }
+  }
 
   # Fetch inputs
   apsimx_path <- model_options$apsimx_path
@@ -83,7 +92,7 @@ rapsimx_wrapper <- function(
     multicores_cpu_count_for_command = multicores,
     verbose = verbose
   )
-  cli::cli_alert_success("run_apsimx function returned object class {class(ret)}!")
+  if (verbose) cli::cli_alert_success("run_apsimx function returned object class {class(ret)}!")
 
   #
   # Read results

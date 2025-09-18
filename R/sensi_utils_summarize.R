@@ -39,12 +39,12 @@ read_db_table <- function(db_filepath, table_name, verbose = FALSE) {
     cli::cli_alert_danger("read_db_table | Error while reading table '{table_name}'!")
     stop()
   } else {
-    cli::cli_alert_success("read_db_table | Table {table_name} was read!")
+    if (verbose) cli::cli_alert_success("read_db_table | Table {table_name} was read!")
   }
 
-  # # 
+  # #
   # # TODO: Filter variables
-  # # 
+  # #
   # vars <- paste(sprintf("%s.[%s], ",tableName, variables), collapse="")
   # vars <- paste(vars,"_Simulations.Name as SimulationName")
   # sql <- paste0('SELECT ', vars, ' FROM ', tableName, ', _Simulations WHERE _Simulations.ID = ', tableName, '.SimulationID')
