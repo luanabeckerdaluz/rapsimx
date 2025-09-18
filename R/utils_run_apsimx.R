@@ -48,12 +48,18 @@ rapsimx_wrapper <- function(
   if (verbose) {
     cli::cli_alert_warning("rapsimx_wrapper | sit_names = {sit_names}")
     cli::cli_alert_warning("rapsimx_wrapper | param_values = {param_values}")
+    cli::cli_alert_warning("rapsimx_wrapper | multicores = {multicores}")
     dots <- list(...)
     if (length(dots) > 0) {
       for (nm in names(dots)) {
         cli::cli_alert_warning("rapsimx_wrapper | ... {nm} = {dots[[nm]]}")
       }
     }
+  }
+
+  if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
+    cli::cli_alert_danger("run_apsimxs | Input Error: When setting multicores, it must be a integer number (e.g. '5' or '5L')")
+    stop()
   }
 
   # Fetch inputs
@@ -86,7 +92,7 @@ rapsimx_wrapper <- function(
     simulations_names = sit_names,
     xlsx_or_met_folder = xlsx_or_met_files_path,
     models_command = apsimx_path,
-    multicores_cpu_count_for_command = multicores,
+    multicores = multicores,
     verbose = verbose
   )
   if (verbose) cli::cli_alert_success("run_apsimx function returned object class {class(ret)}!")
@@ -127,7 +133,7 @@ rapsimx_wrapper <- function(
 }
 
 
-read_apsimx_output <- function(db_filepath, table_name, variables, sim_names = NULL) {
+read_apsimx_output <- function(db_filepath, table_name, variables, sim_names = NULL, verbose = FALSE) {
   con <- DBI::dbConnect(RSQLite::SQLite(), db_filepath)
 
   vars <- paste(sprintf("%s.[%s], ",table_name, variables), collapse = "")
@@ -179,7 +185,7 @@ run_apsimx <- function(
   from_config_file = NULL,
   xlsx_or_met_folder = NULL,
   models_command = NULL,
-  multicores_cpu_count_for_command = NULL,
+  multicores = NULL,
   verbose = FALSE,
   dry_run = FALSE) {
 
@@ -192,8 +198,9 @@ run_apsimx <- function(
     cli::cli_alert_danger("ERROR! apsimx Models executable {models_command} does not exist!")
     stop()
   }
-  if (is.null(multicores_cpu_count_for_command)) {
-    multicores_cpu_count_for_command <- 1
+  if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
+    cli::cli_alert_danger("run_apsimxs | Input Error: When setting multicores, it must be a integer number (e.g. '5' or '5L')")
+    stop()
   }
 
   # # Test APSIMx Models executable
@@ -221,7 +228,14 @@ run_apsimx <- function(
     if (verbose) cli::cli_alert_success("run_apsimx | {db_filepath} exists! So, deleting...")
   }
 
-  command <- glue::glue("{models_command} {apsimx_filepath} --single-threaded=FALSE --cpu-count={multicores_cpu_count_for_command}")
+  command <- glue::glue("{models_command} {apsimx_filepath}")
+
+  # Check if multicores parameter was set
+  if (is.null(multicores)) {
+    command <- glue::glue("{command} --single-threaded=TRUE --cpu-count=1")
+  } else {
+    command <- glue::glue("{command} --single-threaded=FALSE --cpu-count={multicores}")
+  }
 
   # If setting field names, concat names
   if (is.character(simulations_names)) {
@@ -286,6 +300,12 @@ run_apsimxs <- function(
     stop()
   }
 
+  # Check multicores parameter
+  if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
+    cli::cli_alert_danger("run_apsimxs | Input Error: When setting multicores, it must be a integer number (e.g. '5' or '5L')")
+    stop()
+  }
+
   # List files
   apsimx_filepaths <- list.files(
     path = sims_folder,
@@ -331,7 +351,7 @@ run_apsimxs <- function(
         simulations_names = simulations_names,
         dry_run = dry_run,
         models_command = models_command,
-        multicores_cpu_count_for_command = multicores
+        multicores = multicores
       )
     },
     multicores = multicores
