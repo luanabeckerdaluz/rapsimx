@@ -44,7 +44,10 @@ rapsimx_wrapper <- function(
   sit_names = NULL,
   param_values = NULL,
   verbose = FALSE,
-  multicores = NULL) {
+  multicores = NULL,
+  ...) {
+
+  cli::cli_alert_danger("Entrou1 com {model_options$verbose}")
 
   # Fetch inputs
   apsimx_path <- model_options$apsimx_path
