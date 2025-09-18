@@ -5,6 +5,7 @@ rapsimx_wrapper_options <- function(
   predicted_table_name = 'Report',
   observed_table_name = 'Observed',
   xlsx_or_met_files_path = character(0),
+  multicores = NULL,
   verbose = FALSE,
   ...) {
 
@@ -17,8 +18,13 @@ rapsimx_wrapper_options <- function(
   options$variable_names <- variable_names
   options$predicted_table_name <- predicted_table_name
   options$observed_table_name <- observed_table_name
+
+  #
+  # Custom Options
+  #
   options$xlsx_or_met_files_path <- xlsx_or_met_files_path
   options$verbose <- verbose
+  options$multicores <- multicores
 
   #
   # Legacy Options from apsimx_wrapper_options
@@ -41,26 +47,7 @@ rapsimx_wrapper <- function(
   model_options,
   sit_names = NULL,
   param_values = NULL,
-  verbose = FALSE,
-  multicores = NULL,
   ...) {
-
-  if (verbose) {
-    cli::cli_alert_warning("rapsimx_wrapper | sit_names = {sit_names}")
-    cli::cli_alert_warning("rapsimx_wrapper | param_values = {param_values}")
-    cli::cli_alert_warning("rapsimx_wrapper | multicores = {multicores}")
-    dots <- list(...)
-    if (length(dots) > 0) {
-      for (nm in names(dots)) {
-        cli::cli_alert_warning("rapsimx_wrapper | ... {nm} = {dots[[nm]]}")
-      }
-    }
-  }
-
-  if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
-    cli::cli_alert_danger("run_apsimxs | Input Error: When setting multicores, it must be a integer number (e.g. '5' or '5L')")
-    stop()
-  }
 
   # Fetch inputs
   apsimx_path <- model_options$apsimx_path
@@ -69,9 +56,25 @@ rapsimx_wrapper <- function(
   predicted_table_name <- model_options$predicted_table_name
   # observed_table_name <- model_options$observed_table_name
   xlsx_or_met_files_path <- model_options$xlsx_or_met_files_path
+  multicores <- model_options$multicores
+  verbose <- model_options$verbose
 
-  # Consider also verbose from model_options
-  verbose <- verbose | model_options$verbose
+  if (verbose) {
+    cli::cli_alert_warning("rapsimx_wrapper | sit_names = {sit_names}")
+    cli::cli_alert_warning("rapsimx_wrapper | param_values = {param_values}")
+    dots <- list(...)
+    if (length(dots) > 0) {
+      for (nm in names(dots)) {
+        cli::cli_alert_warning("rapsimx_wrapper | ... {nm} = {dots[[nm]]}")
+      }
+    }
+  }
+
+  # Check multicores input
+  if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
+    cli::cli_alert_danger("run_apsimxs | Input Error: When setting multicores, it must be a integer number (e.g. '5' or '5L')")
+    stop()
+  }
 
   start_time <- Sys.time()
 
