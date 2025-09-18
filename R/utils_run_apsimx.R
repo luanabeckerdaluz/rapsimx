@@ -4,8 +4,7 @@ rapsimx_wrapper_options <- function(
   variable_names = character(0),
   predicted_table_name = 'Report',
   observed_table_name = 'Observed',
-  met_files_path = character(0),
-  obs_files_path = character(0),
+  xlsx_or_met_files_path = character(0),
   verbose = FALSE,
   ...) {
 
@@ -18,8 +17,7 @@ rapsimx_wrapper_options <- function(
   options$variable_names <- variable_names
   options$predicted_table_name <- predicted_table_name
   options$observed_table_name <- observed_table_name
-  options$met_files_path <- met_files_path
-  options$obs_files_path <- obs_files_path
+  options$xlsx_or_met_files_path <- xlsx_or_met_files_path
   options$verbose <- verbose
 
   #
@@ -61,11 +59,10 @@ rapsimx_wrapper <- function(
   # Fetch inputs
   apsimx_path <- model_options$apsimx_path
   apsimx_file <- model_options$apsimx_file
-  # variable_names <- model_options$variable_names
+  variable_names <- model_options$variable_names
   predicted_table_name <- model_options$predicted_table_name
   # observed_table_name <- model_options$observed_table_name
-  met_files_path <- model_options$met_files_path
-  # obs_files_path <- model_options$obs_files_path
+  xlsx_or_met_files_path <- model_options$xlsx_or_met_files_path
 
   # Consider also verbose from model_options
   verbose <- verbose | model_options$verbose
@@ -87,7 +84,7 @@ rapsimx_wrapper <- function(
     apsimx_filepath = new_apsimx_filepath,
     read_output = FALSE,
     simulations_names = sit_names,
-    xlsx_or_met_folder = met_files_path,
+    xlsx_or_met_folder = xlsx_or_met_files_path,
     models_command = apsimx_path,
     multicores_cpu_count_for_command = multicores,
     verbose = verbose
@@ -97,14 +94,16 @@ rapsimx_wrapper <- function(
   #
   # Read results
   #
-  res <- NULL
   db_filepath <- gsub(".apsimx", ".db", new_apsimx_filepath)
+
+  res <- NULL
   res$db_file_name <- db_filepath
-  res$sim_list <- rapsimx::read_db_table(
+  # res$sim_list <- rapsimx::read_db_table(
+  res$sim_list <- read_apsimx_output(
     db_filepath = db_filepath,
     table_name = predicted_table_name,
-    verbose = verbose
-    # model_options$variable_names
+    verbose = verbose,
+    variables = variable_names
   )
 
   # If defined, display time
@@ -126,6 +125,52 @@ rapsimx_wrapper <- function(
 
   return(res)
 }
+
+
+read_apsimx_output <- function(db_filepath, table_name, variables, sim_names = NULL) {
+  con <- DBI::dbConnect(RSQLite::SQLite(), db_filepath)
+
+  vars <- paste(sprintf("%s.[%s], ",table_name, variables), collapse = "")
+  vars <- paste(vars,"_Simulations.Name as SimulationName")
+
+  sql <- paste0('SELECT ', vars, ' FROM ', table_name, ', _Simulations WHERE _Simulations.ID = ', table_name, '.SimulationID')
+  data <- DBI::dbGetQuery(con, sql)
+  DBI::dbDisconnect(con)
+  simulationNames <- unique(data$SimulationName)
+
+  # Selecting simulations
+  if (!is.null(sim_names)) {
+    sim_idx <- simulationNames %in% sim_names
+    simulationNames <- simulationNames[sim_idx]
+  }
+
+  # Creating empty list
+  sim_nb <- length(simulationNames)
+  tables <- vector("list", sim_nb)
+
+  # Filling it with results
+  for (i in 1:sim_nb) {
+    sim <- simulationNames[i]
+    tables[[i]] <- data[which(data$SimulationName == sim), ] %>% select(one_of(variables))
+    if ("Clock.Today" %in% names(tables[[i]])) {
+      tables[[i]] <- mutate(tables[[i]],Date=as.Date(Clock.Today)) %>%
+        select(-Clock.Today)
+    } else if ("Date" %in% names(tables[[i]])) {
+      tables[[i]] <- mutate(tables[[i]],Date=as.Date(Date))
+    } else if ("Predicted.Clock.Today" %in% names(tables[[i]])) {
+      tables[[i]] <- mutate(tables[[i]],Date=as.Date(Predicted.Clock.Today)) %>%
+        select(-Predicted.Clock.Today)
+    }
+  }
+
+  names(tables) <- simulationNames
+  return(tables)
+}
+
+
+
+
+
 
 run_apsimx <- function(
   apsimx_filepath,
