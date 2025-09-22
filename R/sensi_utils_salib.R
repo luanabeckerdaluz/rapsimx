@@ -71,10 +71,10 @@ salib_for_one_field_and_param <- function(
   si_df <- NA
   if (salib_sobol) {
     Si <- analyze$analyze(problem, np_arr, calc_second_order = TRUE)
-    si_df <- rapsimx::.si_to_df_sobol(Si, problem$names)
+    si_df <- .si_to_df_sobol(Si, problem$names)
   } else {
     Si <- analyze$analyze(problem, np_arr)
-    si_df <- rapsimx::.si_to_df(Si)
+    si_df <- .si_to_df(Si)
   }
   print("POSSIVEL5")
 

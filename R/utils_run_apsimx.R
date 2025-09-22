@@ -107,7 +107,7 @@ rapsimx_wrapper <- function(
 
   res <- NULL
   res$db_file_name <- db_filepath
-  # res$sim_list <- rapsimx::read_db_table(
+  # res$sim_list <- read_db_table(
   res$sim_list <- read_apsimx_output(
     db_filepath = db_filepath,
     table_name = predicted_table_name,
@@ -273,7 +273,7 @@ run_apsimx <- function(
 
   if (read_output) {
     if (verbose) cli::cli_alert_success("run_apsimx | Reading output...")
-    return(rapsimx::sensi_summarize_harvest_db(db_filepath))
+    return(sensi_summarize_harvest_db(db_filepath))
   }
 
   return(TRUE)
@@ -341,7 +341,7 @@ run_apsimxs <- function(
   res <- .lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
-      rapsimx::run_apsimx(
+      run_apsimx(
         apsimx_filepath = apsimx_filepaths[i],
         simulations_names = simulations_names,
         dry_run = dry_run,
@@ -385,7 +385,7 @@ generate_apsimx <- function(
   if (verbose) cli::cli_alert_success("generate_apsim | copied {sensit_base_sim_filepath} to {filepath_sim}")
 
   # Replace parameters
-  rapsimx::replace_values(
+  replace_values(
     apsimx_path = filepath_sim,
     VERBOSE = FALSE,
     list_params_values = list_params_values

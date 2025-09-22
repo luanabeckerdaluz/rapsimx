@@ -208,7 +208,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         x_must_be_num_array = seq_len(nrow(samples_df_to_run)),
         FUN = function(i) {
           list_params_values <- samples_df_to_run[i, , drop = TRUE]
-          rapsimx::generate_apsimx(
+          generate_apsimx(
             list_params_values = list_params_values[2:length(list_params_values)],
             id = as.numeric(list_params_values[["id"]]),
             folder = self$sims_and_mets_folderpath,
@@ -224,7 +224,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
     },
 
     run = function(runs_only_some_n = NULL, simulations_names = NULL, ids_to_run = NULL, dry_run = FALSE) {
-      rapsimx::run_apsimxs(
+      run_apsimxs(
         sims_folder = self$sims_and_mets_folderpath,
         runs_only_some_n = runs_only_some_n,
         simulations_names = simulations_names,
@@ -289,7 +289,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
           if (dry_run) {
             cli::cli_alert_success("It will read file {filepath}")
           } else {
-            rapsimx::sensi_summarize_harvest_db(
+            sensi_summarize_harvest_db(
               db_filepath = filepath,
               number_of_fields_to_check = number_of_fields_to_check
             )
@@ -347,7 +347,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
           if (dry_run) {
             cli::cli_alert_success("It will Compute salib with field={field} and param={param}")
           } else {
-            rapsimx::salib_for_one_field_and_param(
+            salib_for_one_field_and_param(
               df = self$summarize_df,
               field = field,
               param = param,
