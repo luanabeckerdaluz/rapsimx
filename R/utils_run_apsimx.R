@@ -177,10 +177,6 @@ read_apsimx_output <- function(db_filepath, table_name, variables, sim_names = N
 }
 
 
-
-
-
-
 run_apsimx <- function(
   apsimx_filepath,
   read_output = FALSE,
@@ -195,10 +191,6 @@ run_apsimx <- function(
   # Check inputs
   if (!file.exists(apsimx_filepath)){
     cli::cli_alert_danger("ERROR! apsimx simulation {apsimx_filepath} does not exist!")
-    stop()
-  }
-  if (!file.exists(models_command)){
-    cli::cli_alert_danger("ERROR! apsimx Models executable {models_command} does not exist!")
     stop()
   }
   if (!(is.null(multicores) || (is.numeric(multicores) && multicores == as.integer(multicores)))) {
