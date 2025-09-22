@@ -204,7 +204,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
 
       cli::cli_alert_success("Generating {nrow(samples_df_to_run)} samples...")
 
-      res <- rapsimx::.lapply_parallel_progressbar(
+      res <- .lapply_parallel_progressbar(
         x_must_be_num_array = seq_len(nrow(samples_df_to_run)),
         FUN = function(i) {
           list_params_values <- samples_df_to_run[i, , drop = TRUE]
@@ -282,7 +282,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         }
       }
 
-      res <- rapsimx::.lapply_parallel_progressbar(
+      res <- .lapply_parallel_progressbar(
         x_must_be_num_array = seq_along(files_list),
         FUN = function(i) {
           filepath <- files_list[i]
@@ -339,7 +339,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       all_combinations <- expand.grid(fields, columns_to_include)
 
       # Compute salib for each combination field and columns_to_include
-      res <- rapsimx::.lapply_parallel_progressbar(
+      res <- .lapply_parallel_progressbar(
         x_must_be_num_array = seq_len(nrow(all_combinations)),
         FUN = function(i) {
           field <- all_combinations[i, 1]

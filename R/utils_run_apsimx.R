@@ -346,7 +346,7 @@ run_apsimxs <- function(
 
   cli::cli_alert_success("Running {length(apsimx_filepaths)} apsimx simulations...")
 
-  res <- rapsimx::.lapply_parallel_progressbar(
+  res <- .lapply_parallel_progressbar(
     x_must_be_num_array = seq_along(apsimx_filepaths),
     FUN = function(i) {
       rapsimx::run_apsimx(
