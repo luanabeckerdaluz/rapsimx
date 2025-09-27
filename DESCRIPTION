@@ -1,6 +1,6 @@
 Package: rapsimx
 Title: R package to run Apsim Next Generation
-Version: 0.2.22
+Version: 0.2.23
 Authors@R: 
     person(given = "Luana",
            family = "Becker da Luz",
@@ -22,6 +22,7 @@ Imports:
     glue,
     cli,
     RSQLite,
-    tidyr
+    tidyr,
+    tibble
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

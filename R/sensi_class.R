@@ -390,7 +390,7 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
 
       # Show df stats
       print(dim(self$salib_df))
-      print(as_tibble(head(self$salib_df)))
+      print(tibble::as_tibble(head(self$salib_df)))
 
       # Save csv and head dataframe
       write.csv(self$salib_df, self$salib_csv_filepath, row.names = FALSE)
