@@ -45,7 +45,7 @@ dpkg-deb -x apsim_$APSIMX_VERSION.deb $APSIMX_INSTALLATION_DIR
 ### Test APSIMx with dotnet:
 
 ```bash
-$DOTNET_INSTALLATION_PATH/dotnet $APSIMX_INSTALLATION_DIR/usr/local/lib/apsim/...$APSIMX_VERSION.../bin/Models.dll -V
+$DOTNET_INSTALLATION_PATH/dotnet $APSIMX_INSTALLATION_DIR/usr/local/lib/apsim/...$APSIMX_VERSION.../bin/Models.dll --version
 ```
 
 ### Configuring Models and Apsim executables

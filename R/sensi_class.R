@@ -51,6 +51,25 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         }
       }
 
+      # Test is APSIMx executable (models_command) is running successfully
+      .could_not_run_models_command <- function(cmd, msg){
+        cli::cli_alert_danger("ERROR: Could not run models_command parameter to get APSIMx version. Command: '{cmd}'.")
+        stop(msg)
+      }
+      tryCatch({
+          cmd <- paste(self$models_command, "--version")
+          res <- system(cmd, intern = FALSE)
+        }, error = function(e) {
+          .could_not_run_models_command(cmd, e$message)
+        },
+        warning = function(w) {
+          .could_not_run_models_command(cmd, w$message)
+        },
+        message = function(m) {
+          .could_not_run_models_command(cmd, m$message)
+      })
+      cli::cli_alert_success("Command '{self$models_command}' is running!")
+
       # Create sensi folder
       if (!dir.exists(self$folder)) {
         cli::cli_alert_success("Generating {basename(self$folder)}...")
