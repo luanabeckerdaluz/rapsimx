@@ -177,6 +177,10 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
         tibble::rownames_to_column(var = "id") |>
         dplyr::select(id, everything())
 
+      # Show df stats
+      print(dim(self$samples_df))
+      head(self$samples_df)
+
       # Save csv
       write.csv(self$samples_df, self$samples_csv_filepath, row.names = FALSE)
       cli::cli_alert_success("File {basename(self$samples_csv_filepath)} saved!")
@@ -328,7 +332,11 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       # Make big df
       self$summarize_df <- dplyr::bind_rows(res)
 
-      # Save csv
+      # Show df stats
+      print(dim(self$summarize_df))
+      head(self$summarize_df)
+
+      # Save csv and head dataframe
       write.csv(self$summarize_df, self$summarize_csv_filepath, row.names = FALSE)
       cli::cli_alert_success("File 'summarized.csv' saved!")
     },
