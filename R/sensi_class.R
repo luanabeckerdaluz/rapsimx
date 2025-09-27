@@ -341,27 +341,14 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       cli::cli_alert_success("File 'summarized.csv' saved!")
     },
 
-    compute_salib_for_all_params_and_fields = function(field_column_name, salib_sobol = FALSE, columns_to_exclude = c("id", "field"), fix_NAs_with_mean = FALSE, dry_run = FALSE, overwrite = FALSE) {
-
-      # Check if salib.csv already exists
-      salib_csv_filepath <- file.path(self$folder, "salib.csv")
-      if (file.exists(salib_csv_filepath)) {
-        if (overwrite) {
-          cli::cli_alert_warning("'salib.csv' file already exists on {self$folder} folder! However, it will be overwritten because 'overwrite' parameter was set as TRUE!")
-        } else {
-          cli::cli_alert_danger("'salib.csv' file already exists on {self$folder} folder! Please, if you want to create a new salib csv or overwrite it, set 'overwrite' to TRUE, create a new sensi folder or delete existing file!")
-          stop()
-        }
-      } else {
-        cli::cli_alert_success("'salib.csv' file doesn't exist. Generating...")
-        overwrite <- FALSE
-      }
-
+    compute_salib_for_all_params_and_fields = function(field_column_name, salib_sobol = FALSE, columns_to_exclude = c("id", "field"), fix_NAs_with_mean = FALSE, dry_run = FALSE) {
       # Get number of simulations (samples nrow)
       number_of_simulations <- nrow(self$samples_df)
 
       # Select some columns to compute salib
       columns_to_include <- colnames(self$summarize_df)[!colnames(self$summarize_df) %in% columns_to_exclude]
+
+      # TODO: Tratar se summarize_df não tem alguma variável em columns_to_exclude
 
       # Get fields
       fields <- unique(self$summarize_df[[field_column_name]])
@@ -398,16 +385,16 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       }
 
       # rbind all combination df
-      rbind_salibs <- dplyr::bind_rows(res) %>%
+      self$salib_df <- dplyr::bind_rows(res) %>%
         dplyr::filter(param != TRUE, field != TRUE)
 
-      # Save csv
-      write.csv(rbind_salibs, self$salib_csv_filepath, row.names = FALSE)
-      if (overwrite) {
-        cli::cli_alert_success("File {basename(self$salib_csv_filepath)} was overwriten!")
-      } else {
-        cli::cli_alert_success("File {basename(self$salib_csv_filepath)} was created!")
-      }
+      # Show df stats
+      print(dim(self$salib_df))
+      print(as_tibble(head(self$salib_df)))
+
+      # Save csv and head dataframe
+      write.csv(self$salib_df, self$salib_csv_filepath, row.names = FALSE)
+      cli::cli_alert_success("File '{basename(self$salib_csv_filepath)}' saved!")
     }
   ),
 
