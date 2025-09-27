@@ -10,7 +10,7 @@ conda create -n rgeo -c conda-forge python=3.11 ipykernel salib r-base r-essenti
 conda activate rapsimx
 ## python3 -m ipykernel install --name rapsimx --prefix=$CONDA_PREFIX --display=rapsimx
 Rscript -e "options(warn=2); IRkernel::installspec(name = 'rgeo', displayname = 'R APSIMx')"
-Rscript -e "options(warn = 2, timeout = 300, repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest')); pak::pkg_install(c('hol430/ApsimOnR', 'SticsRPacks/CroPlotR@*release', 'SticsRPacks/SticsRFiles@*release', 'SticsRPacks/SticsOnR@*release', 'SticsRPacks/CroptimizR@*release', 'apsimx', 'rapsimng', 'BayesianTools'));
+Rscript -e "options(warn = 2, timeout = 300, repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest')); pak::pkg_install(c('hol430/ApsimOnR', 'SticsRPacks/CroPlotR@*release', 'SticsRPacks/SticsRFiles@*release', 'SticsRPacks/SticsOnR@*release', 'SticsRPacks/CroptimizR@*release', 'apsimx', 'rapsimng', 'BayesianTools'))"
 ```
 
 **Obs: In case of error when detecting packages already installed, use:**

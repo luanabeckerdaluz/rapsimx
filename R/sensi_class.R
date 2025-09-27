@@ -54,9 +54,13 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       # Create sensi folder
       if (!dir.exists(self$folder)) {
         cli::cli_alert_success("Generating {basename(self$folder)}...")
-        private$generate_folder()
+        private$generate_base_folder()
+        private$generate_sims_subfolder()
       } else {
-        cli::cli_alert_success("Loading {basename(self$folder)}...")
+        cli::cli_alert_success("Loading {basename(self$folder)} folder...")
+        if (!dir.exists(self$sims_and_mets_folderpath)) {
+          private$generate_sims_subfolder()
+        }
         private$try_load_problem()
         private$try_load_samples_csv()
         private$try_load_summarize_csv()
@@ -434,10 +438,14 @@ RApsimxSensitivityClass <- R6::R6Class("RApsimxSensitivityClass",
       )
     },
 
-    generate_folder = function() {
+    generate_base_folder = function() {
       dir.create(self$folder, recursive = TRUE, showWarnings = FALSE)
-      dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
       cli::cli_alert_success("Folder {self$folder} was created!")
+    },
+
+    generate_sims_subfolder = function() {
+      dir.create(self$sims_and_mets_folderpath, showWarnings = FALSE)
+      cli::cli_alert_success("Subfolder {self$sims_and_mets_folderpath} was created!")
     },
 
     files_summary = function() {
