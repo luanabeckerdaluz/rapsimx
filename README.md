@@ -1,34 +1,66 @@
 # R Apsimx Sensitivity
 
-## Create conda env
+## APSIMx and Conda Configuration
+
+### Create conda env with R and Python
 
 ```bash
-conda create -c conda-forge -n rapsimx python=3.11 ipykernel salib r-base=4.4 r-devtools r-tidyverse r-irkernel
+conda create -n rgeo -c conda-forge python=3.11 ipykernel salib r-base r-essentials r-devtools r-remotes r-tidyverse r-xslt r-ggrepel r-lhs r-gridextra r-doparallel r-xml r-rsqlite r-plogr r-pak r-nloptr r-tictoc zlib r-lme4 r-future.apply r-future r-xml2 r-here r-png r-reticulate r-rcpptoml r-rjson -y
 # rapsimx dependencies:
 conda activate rapsimx
-conda install -c conda-forge r-reticulate r-xml2 r-rjson r-future r-future.apply r-lhs
-Rscript -e "install.packages(c('apsimx','rapsimng'), repos = 'https://cloud.r-project.org')"
-python3 -m ipykernel install --name rapsimx --prefix=$CONDA_PREFIX --display=rapsimx
-Rscript -e "options(warn=2); IRkernel::installspec( user = FALSE, prefix = '$CONDA_PREFIX', displayname = 'rapsimx')"
+## python3 -m ipykernel install --name rapsimx --prefix=$CONDA_PREFIX --display=rapsimx
+Rscript -e "options(warn=2); IRkernel::installspec(name = 'rgeo', displayname = 'R APSIMx')"
+Rscript -e "options(warn = 2, timeout = 300, repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/jammy/latest')); pak::pkg_install(c('hol430/ApsimOnR', 'SticsRPacks/CroPlotR@*release', 'SticsRPacks/SticsRFiles@*release', 'SticsRPacks/SticsOnR@*release', 'SticsRPacks/CroptimizR@*release', 'apsimx', 'rapsimng', 'BayesianTools'));
 ```
 
-## Install APSIMx
+**Obs: In case of error when detecting packages already installed, use:**
 
 ```bash
-curl --output apsim.deb https://builds.apsim.info/api/nextgen/download/7770/Linux
-mkdir -p /home/jovyan/meuapsimx/
-dpkg-deb -x apsim.deb /home/jovyan/meuapsimx/
-# Install dotnet
-wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
-chmod +x ./dotnet-install.sh
-./dotnet-install.sh --version latest
-# Test if dotnet is installed
-$HOME/.dotnet/dotnet --info
-# Test apsimx Models
-$HOME/.dotnet/dotnet $HOME/meuapsimx/usr/local/lib/apsim/2025.6.7770.0/bin/Models.dll -V
+export PKG_CONFIG_PATH=$CONDA_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
 
-## What we learned
+### Install dotnet
+
+```bash
+wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+chmod +x ./dotnet-install.sh
+DOTNET_INSTALLATION_PATH=$HOME/dotnet
+# ./dotnet-install.sh --runtime dotnet --version 8.0.0 --install-dir $DOTNET_INSTALLATION_PATH
+./dotnet-install.sh --channel 8.0 --install-dir $DOTNET_INSTALLATION_PATH
+./dotnet --info
+export PATH=$HOME/dotnet:$PATH
+```
+
+### Install APSIMx on Ubuntu
+
+```bash
+APSIMX_INSTALLATION_DIR=$HOME/apsim_$VERSION
+mkdir -p $APSIMX_INSTALLATION_DIR
+APSIMX_VERSION=7850
+wget -O apsim_$APSIMX_VERSION.deb https://builds.apsim.info/api/nextgen/download/$APSIMX_VERSION/Linux
+dpkg-deb -x apsim_$APSIMX_VERSION.deb $APSIMX_INSTALLATION_DIR
+```
+
+### Test APSIMx with dotnet:
+
+```bash
+$DOTNET_INSTALLATION_PATH/dotnet $APSIMX_INSTALLATION_DIR/usr/local/lib/apsim/...$APSIMX_VERSION.../bin/Models.dll -V
+```
+
+### Configuring Models and Apsim executables
+
+```bash
+cd $APSIMX_INSTALLATION_DIR/usr/local/bin
+cp Models Models.OLD
+cp apsim apsim.OLD
+echo 'exec dotnet $APSIMX_INSTALLATION_DIR/usr/local/lib/apsim/...$APSIMX_VERSION.../bin/Models.dll "$@"' > Models
+echo 'exec dotnet $APSIMX_INSTALLATION_DIR/usr/local/lib/apsim/...$APSIMX_VERSION.../bin/ApsimNG.dll "$@"' > apsim
+```
+
+---
+
+## About APSIMx Models
 
 ### Cultivar parameters overlap Replacements
 
